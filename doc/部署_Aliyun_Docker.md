@@ -387,6 +387,7 @@ docker compose up -d
 | 回调 401/403 | 签名校验失败：反向代理改了 body、或 `QQ_APP_SECRET` 不一致 |
 | 回调 409 `webhook_disabled` | 当前是 `QQ_TRANSPORT=websocket`，回调入口已停用（预期行为） |
 | `docker ps` 报 `client version 1.52 is too new. Maximum supported API version is 1.43` | **不是 CLI 太新，是 daemon 太旧**：`apt upgrade` 换了二进制但 `dockerd` 进程还是升级前的版本，而新版 CLI 已不支持旧 API。`sudo systemctl restart docker` 让进程与二进制同版本即可，**不要降级 CLI**。验证：`docker version` 里 Client 与 Server 的 `API version` 必须一致 |
+| `docker ps` 报 `client version 1.43 is too old. Minimum supported API version is 1.44` | CLI 本身是新的，但 shell 里被固定了旧 API：`grep -r DOCKER_API_VERSION ~/.bashrc ~/.zshrc ~/.profile /etc/profile.d/`。这是 daemon 还是旧版时的临时兼容写法，daemon 升级后必须删掉/注释，否则每条 docker 命令都会失败。注意非交互 SSH 不加载 `~/.zshrc`，要验证请用 `zsh -l -c 'docker ps'` |
 | `docker compose` 报 `unknown command: docker compose` | 只装了独立的 `docker-compose`，没有 compose 插件。`sudo ln -sf /usr/local/bin/docker-compose /usr/libexec/docker/cli-plugins/docker-compose` |
 | 日志反复 `gateway_disconnected` 且 `message` 含 401/403 | access_token 或 `QQ_INTENTS` 权限不足：用 `doctor --qq` 看 `gateway` 段落 |
 | 长连接建上但收不到单聊消息 | `QQ_INTENTS` 没包含 `1 << 25`（`GROUP_AND_C2C_EVENT`），或应用未获单聊能力 |
