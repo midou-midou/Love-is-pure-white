@@ -35,11 +35,23 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY pyproject.toml uv.lock README.md ./
-COPY src ./src
 
 ARG INSTALL_LOCAL_EMBEDDINGS=0
 # 阿里云可用镜像源，例如 https://mirrors.aliyun.com/pypi/simple
 ARG UV_DEFAULT_INDEX=
+
+# 先只装第三方依赖（源码变化不会让这一层失效），再装本项目本身，
+# 这样改代码后重建只需几秒而不是重下整个依赖树。
+RUN --mount=type=cache,target=/root/.cache/uv \
+    set -eu; \
+    if [ -z "${UV_DEFAULT_INDEX}" ]; then unset UV_DEFAULT_INDEX; fi; \
+    if [ "${INSTALL_LOCAL_EMBEDDINGS}" = "1" ]; then \
+        uv sync --frozen --no-dev --no-install-project --extra local-embeddings; \
+    else \
+        uv sync --frozen --no-dev --no-install-project; \
+    fi
+
+COPY src ./src
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     set -eu; \

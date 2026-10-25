@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import random
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
@@ -173,7 +174,8 @@ class QQGatewayClient:
         self._http_client = http_client
         self._diagnostics = diagnostics
         self._sleep: Sleeper = sleep or asyncio.sleep
-        self._log = logger or (lambda message: None)
+        self._logger = logging.getLogger("sana_bot.qq_gateway")
+        self._log = logger or self._logger.info
         self._rand = random_source or random.random
         self._session_id: str | None = None
         self._seq: int | None = None
@@ -384,7 +386,10 @@ class QQGatewayClient:
         return base * (0.5 + self._rand() * 0.5)
 
     def _record(self, reason: str, payload: Mapping[str, Any]) -> None:
-        self._log(f"{reason} {dict(payload)}")
+        try:
+            self._log("%s %s", reason, dict(payload))
+        except TypeError:  # 注入的一元 logger
+            self._log(f"{reason} {dict(payload)}")
         if self._diagnostics is None:
             return
         try:
