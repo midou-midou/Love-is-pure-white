@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.7
 #
 # 乾纱凪机器人运行镜像。
 # 单进程、单实例：SQLite + 内存队列 + 每用户串行，禁止横向扩容。
@@ -6,19 +5,30 @@
 # 默认 INSTALL_LOCAL_EMBEDDINGS=0：只装远程向量后端（EMBEDDING_KIND=openai_compatible）需要的依赖，
 # 不会拉 torch / CUDA（本地模型依赖是 pyproject 里的 local-embeddings 可选组）。
 # 要在容器内跑本地 HuggingFace 模型：--build-arg INSTALL_LOCAL_EMBEDDINGS=1。
+#
+# 国内网络构建：这里**故意不写** `# syntax=docker/dockerfile:1.7`，
+# 否则 BuildKit 会先去 Docker Hub 拉 docker/dockerfile 前端镜像（registry-1.docker.io 不通时报
+# resolve image config ... i/o timeout）。`RUN --mount=type=cache` 由内置前端支持。
+# 基础镜像仍来自 Docker Hub，Docker Hub 不可达时用 BASE_IMAGE 指到加速地址：
+#   docker compose build --build-arg BASE_IMAGE=docker.m.daocloud.io/library/python:3.12-slim
+# 需要固定前端版本时，用环境变量 BUILDKIT_SYNTAX=<加速地址>/docker/dockerfile:1.7 传入。
 
-ARG PYTHON_VERSION=3.12
-FROM python:${PYTHON_VERSION}-slim AS builder
+ARG BASE_IMAGE=python:3.12-slim
+
+FROM ${BASE_IMAGE} AS builder
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     UV_PYTHON_DOWNLOADS=never \
     UV_PROJECT_ENVIRONMENT=/opt/venv
 
+# 安装脚本地址可覆盖（astral.sh 不可达时换成可达的镜像/内网地址）
+ARG UV_INSTALLER_URL=https://astral.sh/uv/install.sh
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl \
     && rm -rf /var/lib/apt/lists/* \
-    && curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && curl -LsSf "${UV_INSTALLER_URL}" | sh \
     && mv /root/.local/bin/uv /usr/local/bin/uv \
     && uv --version
 
@@ -33,7 +43,7 @@ ARG UV_DEFAULT_INDEX=
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     set -eu; \
-    if [ -n "${UV_DEFAULT_INDEX}" ]; then export UV_DEFAULT_INDEX="${UV_DEFAULT_INDEX}"; fi; \
+    if [ -z "${UV_DEFAULT_INDEX}" ]; then unset UV_DEFAULT_INDEX; fi; \
     if [ "${INSTALL_LOCAL_EMBEDDINGS}" = "1" ]; then \
         uv sync --frozen --no-dev --extra local-embeddings; \
     else \
@@ -42,7 +52,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     /opt/venv/bin/python -c "import sana_bot, uvicorn, fastapi; print('deps ok')"
 
 
-FROM python:${PYTHON_VERSION}-slim AS runtime
+FROM ${BASE_IMAGE} AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

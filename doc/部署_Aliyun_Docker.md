@@ -39,6 +39,7 @@ docker compose run --rm app doctor --offline       # 容器内只读体检
 
 > 证书由 Caddy 自动申请；首次访问前确认 80 端口可达（HTTP-01 校验需要）。
 > 若 `docker compose ps` 里 app 一直不 healthy，先看 `docker compose logs app`。
+> 第 4 步若报 Docker Hub 超时（`registry-1.docker.io ... i/o timeout`），先按 §5.1.1 处理。
 
 ## 1 先了解约束
 
@@ -66,6 +67,9 @@ docker compose run --rm app doctor --offline       # 容器内只读体检
    按现行要求需完成 ICP 备案；未备案可先选香港/新加坡等地域，或用非 80/443 端口
    （QQ 回调仍需 HTTPS）。
 5. **QQ 开放平台**：应用已获 C2C 文本能力，能配置回调地址与沙箱用户。
+
+> `docker pull` 若报 `registry-1.docker.io ... i/o timeout`，先按 §5.1 配好镜像加速再往下走，
+> 否则构建与 `--profile tls` 的 Caddy 拉取都会失败。
 
 ## 3 准备代码与运行数据
 
@@ -140,6 +144,71 @@ export UV_DEFAULT_INDEX=https://mirrors.aliyun.com/pypi/simple
 docker compose build            # 默认镜像约 500MB（不含 torch/CUDA）
 docker compose up -d
 ```
+
+#### 5.1.1 Docker Hub 不可达（`i/o timeout`）时怎么办
+
+大陆 ECS 常见 `registry-1.docker.io` 连不上，表现为：
+
+- `! app Warning Get "https://registry-1.docker.io/v2/": net/http: request canceled`
+- `failed to solve: ... resolve image config for docker.io/docker/dockerfile:1.7 ... i/o timeout`
+
+两种处理方式，任选其一（**方式 A 更省事**）。
+
+**方式 A：给 Docker 配镜像加速器**（对 `docker pull` 和构建都生效，只需做一次）
+
+阿里云 ECS 用[容器镜像服务控制台](https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors)里的
+「镜像加速器」专有地址（形如 `https://<你的ID>.mirror.aliyuncs.com`），或任选一个公开加速地址：
+
+```bash
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json >/dev/null <<'JSON'
+{
+  "registry-mirrors": ["https://<你的ID>.mirror.aliyuncs.com"]
+}
+JSON
+sudo systemctl daemon-reload && sudo systemctl restart docker
+docker info | grep -A2 'Registry Mirrors'    # 确认已生效
+docker compose up -d --build
+```
+
+**方式 B：不改 daemon，直接指定可达的镜像来源**（`docker-compose.yml` 已把这些做成变量）
+
+构建用的两处 Docker Hub 依赖都可以换掉：基础镜像 `python:3.12-slim` 与 uv 安装脚本。
+先挑一个从这台机器可达的加速地址（返回 `401`/`200` 即可用，`000` 表示不通）：
+
+```bash
+for h in docker.1ms.run docker.m.daocloud.io docker.xuanyuan.me hub.rat.dev; do
+  printf '%-24s ' "$h"; curl -s -o /dev/null -m 5 -w '%{http_code}\n' "https://$h/v2/"
+done
+```
+
+```bash
+cd /opt/sana-bot
+# 写进 .env（持久生效，compose 会自动读取）
+cat >> .env <<'EOF'
+SANABOT_BASE_IMAGE=docker.m.daocloud.io/library/python:3.12-slim
+SANABOT_CADDY_IMAGE=docker.m.daocloud.io/library/caddy:2.8-alpine
+EOF
+docker compose --profile tls up -d --build
+```
+
+等价的一次性写法：`docker compose build --build-arg BASE_IMAGE=docker.m.daocloud.io/library/python:3.12-slim`。
+`astral.sh` 也拉不动时同理：`SANABOT_UV_INSTALLER_URL=<可达的 uv 安装脚本地址>`。
+
+如果不想改任何变量，也可以先按官方名字打好标签，让 `Dockerfile` 与 compose 完全不用动：
+
+```bash
+docker pull docker.m.daocloud.io/library/python:3.12-slim && docker tag docker.m.daocloud.io/library/python:3.12-slim python:3.12-slim
+docker pull docker.m.daocloud.io/library/caddy:2.8-alpine && docker tag docker.m.daocloud.io/library/caddy:2.8-alpine caddy:2.8-alpine
+```
+
+> `Dockerfile` **不再**写 `# syntax=docker/dockerfile:1.7`。该指令会让 BuildKit 先去 Docker Hub 拉
+> 前端镜像，是 `resolve image config ... dockerfile:1.7` 超时的直接原因；`RUN --mount=type=cache`
+> 由内置前端支持，无需外部镜像。若确实要固定前端版本：
+> `docker compose build --build-arg BUILDKIT_SYNTAX=docker.m.daocloud.io/docker/dockerfile:1.7`。
+>
+> 加速地址请以实际可达为准，示例用的是 `docker.m.daocloud.io`；换其他站点时把前缀整段替换即可。
+> 另一条稳妥路线是先在本机构建并推到 ACR，服务器只 `pull`（见 §5.2）。
 
 ### 5.2 或：本机构建后推阿里云 ACR（可选）
 
@@ -265,6 +334,8 @@ docker compose up -d
 | 启动即 `PermissionError: /app/runtime/logs` | 宿主 `runtime/` 属主不是 10001，见 §3 的 `chown` 或启用 compose 的 `user:` |
 | `local_embeddings_extra_missing` | `.env` 用了 `EMBEDDING_KIND=local` 但镜像未装可选组：改用 `--build-arg INSTALL_LOCAL_EMBEDDINGS=1` 重建，或切回远程向量 |
 | `docker compose up` 报找不到 `.env` | compose 的 `env_file` 要求 `.env` 存在，先 `cp .env.example .env` |
+| `Get "https://registry-1.docker.io/v2/": ... i/o timeout` | Docker Hub 不可达：按 §5.1.1 配镜像加速，或用 `SANABOT_BASE_IMAGE` / `SANABOT_CADDY_IMAGE` 指到加速地址 |
+| `resolve image config for docker.io/docker/dockerfile:1.7 ... DeadlineExceeded` | 同上（旧版 `Dockerfile` 的 `# syntax` 指令会拉前端镜像）；当前 `Dockerfile` 已移除该指令，更新代码后重建即可 |
 
 ## 10 安全基线
 

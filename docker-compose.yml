@@ -14,8 +14,11 @@ services:
     build:
       context: .
       args:
+        # Docker Hub 不可达时换成加速地址，例如 docker.m.daocloud.io/library/python:3.12-slim
+        BASE_IMAGE: "${SANABOT_BASE_IMAGE:-python:3.12-slim}"
         INSTALL_LOCAL_EMBEDDINGS: "${INSTALL_LOCAL_EMBEDDINGS:-0}"
         UV_DEFAULT_INDEX: "${UV_DEFAULT_INDEX:-}"
+        UV_INSTALLER_URL: "${SANABOT_UV_INSTALLER_URL:-https://astral.sh/uv/install.sh}"
     image: ${SANABOT_IMAGE:-sana-bot:latest}
     restart: unless-stopped
     env_file:
@@ -50,7 +53,7 @@ services:
         max-file: "5"
 
   caddy:
-    image: caddy:2.8-alpine
+    image: ${SANABOT_CADDY_IMAGE:-caddy:2.8-alpine}
     profiles: ["tls"]
     restart: unless-stopped
     depends_on:
