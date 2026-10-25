@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "visual-check",
+  "evidenceKind": "automated-browser",
+  "status": "fail",
+  "visualReview": "pending",
+  "artifact": {
+    "path": "/Users/midou/GitHub/Love-is-pure-white/doc/手机猫娘代码分析/diagrams/speech-architecture.html",
+    "sha256": "e98f7bf68ea3d28b7ef3df2c6a85da2e70c436ea396c34fa0e5653e2a634c624",
+    "bytes": 709540
+  },
+  "state": {
+    "detail": "read",
+    "motion": "still"
+  },
+  "chrome": {
+    "status": "available",
+    "executable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+  },
+  "diagnostics": [
+    {
+      "code": "viewer/visual-check-runtime",
+      "severity": "error",
+      "message": "visual-check could not complete its Chrome inspection.",
+      "subject": {
+        "artifact": "/Users/midou/GitHub/Love-is-pure-white/doc/手机猫娘代码分析/diagrams/speech-architecture.html"
+      },
+      "evidence": {
+        "reason": "Chrome DevTools process exit failed: Chrome closed with signal SIGABRT\nChrome process: signal SIGABRT."
+      },
+      "supportedFixes": [
+        "resolve the reported Chrome inspection error, then rerun visual-check"
+      ]
+    }
+  ],
+  "containment": {
+    "status": "fail",
+    "viewports": []
+  },
+  "readability": {
+    "status": "fail",
+    "minimumProjectedNodeTextPx": 6,
+    "viewports": []
+  },
+  "viewerChrome": {
+    "status": "fail",
+    "viewports": []
+  },
+  "captures": {
+    "status": "fail",
+    "screenshots": [],
+    "contactSheet": null
+  },
+  "sidecars": {
+    "receipt": "speech-architecture.visual-check.json",
+    "contactSheet": "speech-architecture.visual-check.html"
+  },
+  "error": "Chrome DevTools process exit failed: Chrome closed with signal SIGABRT\nChrome process: signal SIGABRT."
+}

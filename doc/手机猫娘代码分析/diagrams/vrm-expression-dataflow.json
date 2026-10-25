@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "VRM 表情控制数据流",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1080,
+      760
+    ]
+  },
+  "stages": [
+    {
+      "label": "文本完成"
+    },
+    {
+      "label": "情绪识别"
+    },
+    {
+      "label": "事件分发"
+    },
+    {
+      "label": "表情解析"
+    },
+    {
+      "label": "逐帧渲染"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "reply",
+      "type": "frontend",
+      "label": "完整助手回复",
+      "sublabel": "去除音乐指令",
+      "stage": 0,
+      "row": 1
+    },
+    {
+      "id": "classifier",
+      "type": "cloud",
+      "label": "Emotion LLM",
+      "sublabel": "5 秒超时",
+      "stage": 1,
+      "row": 1
+    },
+    {
+      "id": "event",
+      "type": "messagebus",
+      "label": "emotion-ready",
+      "sublabel": "emotion + turnId",
+      "stage": 2,
+      "row": 1
+    },
+    {
+      "id": "map",
+      "type": "database",
+      "label": "Mood Map",
+      "sublabel": "模型专属映射",
+      "stage": 3,
+      "row": 0
+    },
+    {
+      "id": "mood",
+      "type": "frontend",
+      "label": "目标 mood weights",
+      "sublabel": "neutral/happy/...",
+      "stage": 3,
+      "row": 2
+    },
+    {
+      "id": "blend",
+      "type": "frontend",
+      "label": "expressionManager",
+      "sublabel": "平滑后的 blendshape",
+      "stage": 4,
+      "row": 1
+    },
+    {
+      "id": "motion",
+      "type": "frontend",
+      "label": "动作运行时",
+      "sublabel": "情绪身体意图",
+      "stage": 4,
+      "row": 3
+    }
+  ],
+  "flows": [
+    {
+      "from": "reply",
+      "to": "classifier",
+      "label": "POST 文本",
+      "variant": "emphasis"
+    },
+    {
+      "from": "classifier",
+      "to": "event",
+      "label": "emotion 分类"
+    },
+    {
+      "from": "event",
+      "to": "mood",
+      "label": "applyEmotion",
+      "variant": "emphasis"
+    },
+    {
+      "from": "map",
+      "to": "mood",
+      "label": "expression 候选与权重",
+      "labelDy": 24
+    },
+    {
+      "from": "mood",
+      "to": "blend",
+      "label": "delta 插值 setValue",
+      "variant": "emphasis"
+    },
+    {
+      "from": "event",
+      "to": "motion",
+      "label": "身体动作提示",
+      "variant": "dashed",
+      "route": "bottom-channel",
+      "labelDy": 30
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "时序特征",
+      "items": [
+        "分类发生在回合结束后",
+        "表情可能晚于首文本和首音频"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "渲染特征",
+      "items": [
+        "眨眼、mood 和口型共享 expressionManager",
+        "口型元音由独立链路覆盖"
+      ]
+    }
+  ]
+}

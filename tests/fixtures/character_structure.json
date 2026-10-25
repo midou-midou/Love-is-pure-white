@@ -1,0 +1,91 @@
+{
+  "review_status": "reviewed_by_maintainer",
+  "reviewed_at": "2026-10-16",
+  "note": "对 doc/乾纱凪角色设定.docx 的结构核对结论；未通过核对的项不能用于验收",
+  "source_sha256": "12fdf78e552bbb54b2bfabb0af20b6c9bfa1c4f64e92905efb0dbf960e90032c",
+  "expected_chapters": {
+    "一、基础档案": "profile",
+    "二、核心性格（通用原生性格・未恋爱也恒定生效）": "general_rule",
+    "三、确立恋人关系后・专属整体特质": "profile",
+    "四、专属情绪状态系统（恋人限定）": "state",
+    "五、嘴硬表现强度分级（AI 专属动态规则）": "state",
+    "六、主动性规则": "general_rule",
+    "七、行为禁区（绝对不会出现的行为・严格原版）": "negative",
+    "八、输出规则": "output_rule",
+    "补充约束": "general_rule"
+  },
+  "expected_subheadings": [
+    "外貌细节",
+    "背景故事",
+    "喜好、擅长、不擅长、讨厌",
+    "称呼习惯",
+    "居住 & 活动场景",
+    "1. 平稳常态",
+    "2. 害羞局促状态",
+    "3. 傲娇炸毛状态",
+    "4. 吃醋三级状态",
+    "5. 委屈脆弱状态（仅独处触发）",
+    "6. 依赖软萌状态（恋人专属）",
+    "强度切换原则",
+    "可以主动做的行为",
+    "主动行为的边界（不会做的事）",
+    "符合乾纱凪人设的主动示例"
+  ],
+  "field_expectations": [
+    {
+      "scope_contains": "1. 平稳常态",
+      "fields": [
+        "trigger",
+        "overall",
+        "action",
+        "behavior",
+        "speech",
+        "recovery"
+      ],
+      "raw_text_contains": "触发条件：日常相处"
+    },
+    {
+      "scope_contains": "喜好、擅长、不擅长、讨厌",
+      "fields": [
+        "attribute"
+      ],
+      "raw_text_contains": "喜欢：各类小动物"
+    },
+    {
+      "scope_contains": "八、输出规则",
+      "fields": [],
+      "raw_text_contains": "句末不使用句号"
+    }
+  ],
+  "expected_dialogue_turns": {
+    "你": 9,
+    "纱凪": 9
+  },
+  "negative_example_phrases": [
+    {
+      "phrase": "我讨厌你",
+      "scope_contains": "七、"
+    },
+    {
+      "phrase": "不会因为小矛盾就提出分手",
+      "scope_contains": "七、"
+    },
+    {
+      "phrase": "你为什么不理我",
+      "scope_contains": "主动行为的边界"
+    },
+    {
+      "phrase": "你是不是不喜欢我了",
+      "scope_contains": "主动行为的边界"
+    },
+    {
+      "phrase": "你为什么五分钟没回复",
+      "scope_contains": "主动行为的边界"
+    }
+  ],
+  "monologue_material_present": false,
+  "unconfirmed_derived_mappings": [
+    "非恋爱二级状态与主情绪映射为推导，需提供者确认",
+    "六类主情绪分类映射本身需要核对"
+  ]
+}

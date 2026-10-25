@@ -1,0 +1,18 @@
+# QQ 机器人回调入口：Caddy 自动申请/续期 Let's Encrypt 证书，并原样转发 webhook 请求体。
+# 签名校验依赖原始字节，因此这里不做任何 body 改写。
+{
+	email {$ACME_EMAIL}
+	admin off
+}
+
+{$SANABOT_DOMAIN} {
+	encode zstd gzip
+
+	log {
+		output stdout
+		format console
+	}
+
+	# 平台健康检查与就绪检查可直接暴露（不含凭据）
+	reverse_proxy app:8000
+}

@@ -1,0 +1,43 @@
+{
+  "name": "CoralSidePonytailGirl",
+  "canvas": { "recommendedWidth": 4096, "recommendedHeight": 4096 },
+  "textureAtlas": { "recommendedSize": 4096, "premultipliedAlpha": true },
+  "drawOrderBackToFront": [
+    "Hair_Back_L", "Hair_Back_R", "Hair_Ponytail_Back", "Bow_Back",
+    "Leg_L", "Leg_R", "Shoe_L", "Shoe_R", "Torso", "Skirt_Back",
+    "Arm_L", "Arm_R", "Sleeve_L", "Sleeve_R", "Hand_L", "Hand_R",
+    "Skirt_Front", "Neck", "Face", "Ear_L", "Ear_R",
+    "EyeWhite_L", "Iris_L", "Highlight_L", "Eyelid_L", "Brow_L",
+    "EyeWhite_R", "Iris_R", "Highlight_R", "Eyelid_R", "Brow_R",
+    "Nose", "Mouth_Inside", "Mouth_Line", "Blush_L", "Blush_R",
+    "Hair_Side_L", "Hair_Side_R", "Hair_Front", "Ahoge", "Ponytail_Front",
+    "Ribbon_Blue", "Ribbon_Ponytail"
+  ],
+  "parameters": [
+    { "id": "ParamAngleX", "min": -30, "default": 0, "max": 30 },
+    { "id": "ParamAngleY", "min": -30, "default": 0, "max": 30 },
+    { "id": "ParamAngleZ", "min": -30, "default": 0, "max": 30 },
+    { "id": "ParamBodyAngleX", "min": -10, "default": 0, "max": 10 },
+    { "id": "ParamBodyAngleY", "min": -10, "default": 0, "max": 10 },
+    { "id": "ParamBodyAngleZ", "min": -10, "default": 0, "max": 10 },
+    { "id": "ParamEyeLOpen", "min": 0, "default": 1, "max": 1 },
+    { "id": "ParamEyeROpen", "min": 0, "default": 1, "max": 1 },
+    { "id": "ParamEyeBallX", "min": -1, "default": 0, "max": 1 },
+    { "id": "ParamEyeBallY", "min": -1, "default": 0, "max": 1 },
+    { "id": "ParamBrowLY", "min": -1, "default": 0, "max": 1 },
+    { "id": "ParamBrowRY", "min": -1, "default": 0, "max": 1 },
+    { "id": "ParamMouthForm", "min": -1, "default": 0, "max": 1 },
+    { "id": "ParamMouthOpenY", "min": 0, "default": 0, "max": 1 },
+    { "id": "ParamBreath", "min": 0, "default": 0, "max": 1 },
+    { "id": "ParamHairFront", "min": -1, "default": 0, "max": 1 },
+    { "id": "ParamHairSide", "min": -1, "default": 0, "max": 1 },
+    { "id": "ParamHairBack", "min": -1, "default": 0, "max": 1 },
+    { "id": "ParamPonytailSwing", "min": -1, "default": 0, "max": 1 }
+  ],
+  "deformerHierarchy": {
+    "Root": ["Body", "Head", "HairBack", "Ponytail"],
+    "Body": ["Torso", "ArmL", "ArmR", "Skirt", "LegL", "LegR"],
+    "Head": ["Face", "Eyes", "Brows", "Mouth", "HairFront", "HairSide"],
+    "Ponytail": ["PonytailBase", "PonytailMid", "PonytailTip", "Braid", "Ribbon"]
+  }
+}

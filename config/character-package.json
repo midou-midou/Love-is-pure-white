@@ -1,0 +1,491 @@
+{
+  "format_version": "structural_v2",
+  "chunking_strategy": "markdown_cards_v1",
+  "character": "sana",
+  "story_stage": "高二，美羽毕业后，纱凪已接任社长",
+  "required_relationship": "romantic",
+  "source_root": "doc/乾纱凪角色设定整理版",
+  "profile_version": "package-profile-1",
+  "policy_version": "package-policy-1",
+  "catalog_version": "sana-state-catalog-v2",
+  "included_files": [
+    {
+      "path": "01_核心设定.md",
+      "role": "core"
+    },
+    {
+      "path": "02_输出规范.md",
+      "role": "output"
+    },
+    {
+      "path": "03_情绪状态.md",
+      "role": "emotion"
+    },
+    {
+      "path": "04_场景行为.md",
+      "role": "scene"
+    },
+    {
+      "path": "05_背景资料.md",
+      "role": "background"
+    },
+    {
+      "path": "06_对话示例.md",
+      "role": "example"
+    }
+  ],
+  "excluded_files": [
+    "00_加载说明.md",
+    "07_整理记录与待配置.md"
+  ],
+  "resident_ids": [
+    "sana_core",
+    "sana_output",
+    "sana_emotion_general"
+  ],
+  "resident_sources": {
+    "sana_core": "01_核心设定.md",
+    "sana_output": "02_输出规范.md",
+    "sana_emotion_general": "03_情绪状态.md"
+  },
+  "expected_counts": {
+    "resident": 3,
+    "cards": 26,
+    "encoded": 25,
+    "emotion": 7,
+    "scene": 6,
+    "lore": 6,
+    "example": 7
+  },
+  "card_conditions": {
+    "sana_emotion_general": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": [],
+      "resident": true
+    },
+    "sana_emotion_calm": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": [],
+      "card_states": [
+        "sana_emotion_calm"
+      ]
+    },
+    "sana_emotion_shy": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": [
+        "害羞局促"
+      ],
+      "card_states": [
+        "sana_emotion_shy"
+      ]
+    },
+    "sana_emotion_flustered": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": [
+        "傲娇炸毛",
+        "not_genuine_anger"
+      ],
+      "card_states": [
+        "sana_emotion_flustered"
+      ]
+    },
+    "sana_emotion_jealous": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": [
+        "轻度吃醋",
+        "中度吃醋",
+        "重度吃醋",
+        "自卑失落"
+      ],
+      "card_states": [
+        "sana_emotion_jealous_light",
+        "sana_emotion_jealous_medium",
+        "sana_emotion_jealous_heavy"
+      ]
+    },
+    "sana_emotion_hurt": {
+      "relationship": "romantic",
+      "scene": "private",
+      "medium": "any",
+      "state_tags": [
+        "委屈脆弱"
+      ],
+      "card_states": [
+        "sana_emotion_hurt"
+      ]
+    },
+    "sana_emotion_secure": {
+      "relationship": "romantic",
+      "scene": "private",
+      "medium": "any",
+      "state_tags": [
+        "依赖软萌"
+      ],
+      "card_states": [
+        "sana_emotion_secure"
+      ]
+    },
+    "sana_scene_share": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": []
+    },
+    "sana_scene_care": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": []
+    },
+    "sana_scene_praise": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": []
+    },
+    "sana_scene_comfort": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": []
+    },
+    "sana_scene_gift": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": []
+    },
+    "sana_scene_conflict": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": []
+    },
+    "sana_lore_family": {
+      "relationship": "any",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": []
+    },
+    "sana_lore_club": {
+      "relationship": "any",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": []
+    },
+    "sana_lore_relationship": {
+      "relationship": "any",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": []
+    },
+    "sana_lore_appearance": {
+      "relationship": "any",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": []
+    },
+    "sana_lore_preferences": {
+      "relationship": "any",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": []
+    },
+    "sana_lore_places_names": {
+      "relationship": "any",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": []
+    },
+    "sana_example_calm": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "co_present",
+      "state_tags": []
+    },
+    "sana_example_care": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "text",
+      "state_tags": []
+    },
+    "sana_example_shy": {
+      "relationship": "romantic",
+      "scene": "private",
+      "medium": "co_present",
+      "state_tags": []
+    },
+    "sana_example_jealous": {
+      "relationship": "romantic",
+      "scene": "private",
+      "medium": "co_present",
+      "state_tags": []
+    },
+    "sana_example_hurt": {
+      "relationship": "romantic",
+      "scene": "private",
+      "medium": "co_present",
+      "state_tags": []
+    },
+    "sana_example_share": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "text",
+      "state_tags": []
+    },
+    "sana_example_gift": {
+      "relationship": "romantic",
+      "scene": "private",
+      "medium": "co_present",
+      "state_tags": []
+    }
+  },
+  "state_catalog": {
+    "version": "sana-state-catalog-v2",
+    "primary_moods": [
+      "neutral",
+      "happy",
+      "angry",
+      "sad"
+    ],
+    "event_tags": [
+      "direct_praise",
+      "gentle_gaze",
+      "sudden_closeness",
+      "sweet_talk",
+      "teasing",
+      "small_quarrel",
+      "ignore_user",
+      "user_with_other",
+      "cold_treatment",
+      "being_comforted",
+      "misunderstanding",
+      "being_scolded",
+      "club_pressure",
+      "family_pressure",
+      "late_night",
+      "relief",
+      "steady_daily"
+    ],
+    "states": [
+      {
+        "id": "sana_emotion_calm",
+        "label": "平稳常态",
+        "primary": "neutral",
+        "tags": [
+          "平稳常态"
+        ],
+        "card_id": "sana_emotion_calm",
+        "priority": 1,
+        "from_states": [
+          "*"
+        ],
+        "event_tags": [
+          "steady_daily",
+          "relief"
+        ],
+        "relationship": "romantic",
+        "scene": "any"
+      },
+      {
+        "id": "sana_emotion_shy",
+        "label": "害羞局促",
+        "primary": "happy",
+        "tags": [
+          "害羞局促"
+        ],
+        "card_id": "sana_emotion_shy",
+        "priority": 5,
+        "from_states": [
+          "*"
+        ],
+        "event_tags": [
+          "direct_praise",
+          "gentle_gaze",
+          "sudden_closeness",
+          "sweet_talk"
+        ],
+        "relationship": "romantic",
+        "scene": "any"
+      },
+      {
+        "id": "sana_emotion_flustered",
+        "label": "傲娇炸毛",
+        "primary": "angry",
+        "tags": [
+          "傲娇炸毛",
+          "not_genuine_anger"
+        ],
+        "card_id": "sana_emotion_flustered",
+        "priority": 6,
+        "from_states": [
+          "*"
+        ],
+        "event_tags": [
+          "teasing",
+          "small_quarrel"
+        ],
+        "relationship": "romantic",
+        "scene": "any"
+      },
+      {
+        "id": "sana_emotion_jealous_light",
+        "label": "轻度吃醋",
+        "primary": "angry",
+        "tags": [
+          "轻度吃醋"
+        ],
+        "card_id": "sana_emotion_jealous",
+        "priority": 6,
+        "from_states": [
+          "平稳常态",
+          "害羞局促",
+          "傲娇炸毛",
+          "轻度吃醋",
+          "中度吃醋"
+        ],
+        "event_tags": [
+          "ignore_user",
+          "user_with_other"
+        ],
+        "relationship": "romantic",
+        "scene": "any"
+      },
+      {
+        "id": "sana_emotion_jealous_medium",
+        "label": "中度吃醋",
+        "primary": "angry",
+        "tags": [
+          "中度吃醋"
+        ],
+        "card_id": "sana_emotion_jealous",
+        "priority": 7,
+        "from_states": [
+          "轻度吃醋",
+          "中度吃醋",
+          "傲娇炸毛"
+        ],
+        "event_tags": [
+          "ignore_user",
+          "user_with_other",
+          "small_quarrel"
+        ],
+        "relationship": "romantic",
+        "scene": "any"
+      },
+      {
+        "id": "sana_emotion_jealous_heavy",
+        "label": "重度吃醋",
+        "primary": "sad",
+        "tags": [
+          "重度吃醋",
+          "自卑失落"
+        ],
+        "card_id": "sana_emotion_jealous",
+        "priority": 8,
+        "from_states": [
+          "中度吃醋",
+          "重度吃醋"
+        ],
+        "event_tags": [
+          "cold_treatment"
+        ],
+        "relationship": "romantic",
+        "scene": "any"
+      },
+      {
+        "id": "sana_emotion_hurt",
+        "label": "委屈脆弱",
+        "primary": "sad",
+        "tags": [
+          "委屈脆弱"
+        ],
+        "card_id": "sana_emotion_hurt",
+        "priority": 8,
+        "from_states": [
+          "*"
+        ],
+        "event_tags": [
+          "misunderstanding",
+          "being_scolded"
+        ],
+        "relationship": "romantic",
+        "scene": "private"
+      },
+      {
+        "id": "sana_emotion_secure",
+        "label": "依赖软萌",
+        "primary": "happy",
+        "tags": [
+          "依赖软萌"
+        ],
+        "card_id": "sana_emotion_secure",
+        "priority": 9,
+        "from_states": [
+          "委屈脆弱",
+          "重度吃醋"
+        ],
+        "event_tags": [
+          "being_comforted"
+        ],
+        "relationship": "romantic",
+        "scene": "private"
+      }
+    ],
+    "recoveries": [
+      {
+        "event_tag": "being_comforted",
+        "from_states": [
+          "轻度吃醋",
+          "中度吃醋",
+          "重度吃醋",
+          "委屈脆弱"
+        ],
+        "to_state": "sana_emotion_calm",
+        "note": "被明确在意与耐心陪伴后逐步缓和，可残留一点嘴硬"
+      },
+      {
+        "event_tag": "relief",
+        "from_states": [
+          "委屈脆弱",
+          "重度吃醋"
+        ],
+        "to_state": "sana_emotion_secure",
+        "note": "恢复安心后不再重复索取证明"
+      }
+    ]
+  },
+  "budgets": {
+    "max_prompt_tokens": 4096,
+    "max_history_turns": 6,
+    "max_query_recent_user_messages": 3,
+    "max_example_cards": 2,
+    "max_supplements": 8,
+    "reserved_output_tokens": 320
+  },
+  "retrieval_policy": {
+    "version": "package-policy-1",
+    "order": [
+      "resident",
+      "state_rule",
+      "scene_rule",
+      "background",
+      "example"
+    ],
+    "threshold_stage": "reply",
+    "threshold_source": "calibration_report",
+    "unknown_scene_policy": "conservative",
+    "exclude_content_when_condition_unknown": true,
+    "max_vector_candidates": 25
+  }
+}

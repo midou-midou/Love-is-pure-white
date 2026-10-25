@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>乾纱凪 · 本地聊天台</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+  :root {
+    --ink: #2b2b31; --muted: #8a8a94; --line: #e6e6ee;
+    --accent: #d4688a; --bg: #f7f7fa;
+    --ok: #2f9e6b; --bad: #d1524c; --warn: #c98a1e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.6 -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  }
+  #app { max-width: 760px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; }
+  header { padding: 14px 18px; background: #fff; border-bottom: 1px solid var(--line); }
+  h1 { margin: 0 0 6px; font-size: 16px; letter-spacing: .5px; }
+  h1 small { color: var(--muted); font-weight: 400; margin-left: 8px; font-size: 12px; }
+  .status { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .status b { color: var(--ink); font-weight: 600; }
+  .status .err { color: var(--bad); }
+  .field { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .field input {
+    flex: 1; padding: 5px 9px; font-size: 12px; border: 1px solid var(--line);
+    border-radius: 6px; background: #fbfbfd; color: var(--ink); font-family: inherit;
+  }
+  main { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; }
+  .row.user { justify-content: flex-end; }
+  .bubble { max-width: 88%; padding: 10px 13px; border-radius: 12px; white-space: pre-wrap; word-break: break-word; }
+  .user .bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 3px; }
+  .bot .bubble { background: #fff; border: 1px solid var(--line); border-bottom-left-radius: 3px; }
+  .bot .bubble.failed { border-color: #f0d3d1; background: #fdf7f6; color: #8a5551; }
+  .meta { margin-top: 8px; padding-top: 7px; border-top: 1px dashed var(--line); font-size: 12px; color: var(--muted); }
+  .user .meta { border-top-color: rgba(255, 255, 255, .45); color: rgba(255, 255, 255, .88); }
+  .user .meta .inspect { color: #fff; }
+  .user .meta .cand .score { color: #fff; }
+  .meta .tag { margin-right: 10px; }
+  .ok { color: var(--ok); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+  .inspect { background: none; border: none; padding: 0; font: inherit; font-size: 12px; color: var(--accent); cursor: pointer; text-decoration: underline dotted; }
+  .cands { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+  .cand { display: flex; gap: 8px; font-size: 12px; color: var(--muted); }
+  .cand .score { flex: 0 0 46px; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .cand .body { overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .typing { color: var(--muted); font-size: 13px; }
+  footer { padding: 12px 18px 16px; background: #fff; border-top: 1px solid var(--line); display: flex; gap: 10px; align-items: flex-end; }
+  footer textarea {
+    flex: 1; resize: none; height: 46px; max-height: 140px; padding: 11px 12px; font: inherit;
+    border: 1px solid var(--line); border-radius: 10px; background: #fbfbfd; color: var(--ink);
+  }
+  footer textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
+  footer button {
+    height: 46px; padding: 0 20px; font: inherit; font-weight: 600; color: #fff; cursor: pointer;
+    background: var(--accent); border: none; border-radius: 10px;
+  }
+  footer button:disabled { opacity: .45; cursor: default; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>乾纱凪 · 本地聊天台 <small>开发用 · 回复不一定送达到 QQ</small></h1>
+    <div class="status">
+      <span v-if="info.error" class="err">✗ {{ info.error }}</span>
+      <template v-else>
+        <span>索引 <b>{{ short(info.active_index?.id) }}</b></span>
+        <span>门槛 <b>{{ info.threshold ?? '—' }}</b></span>
+        <span>模型 <b>{{ info.model }}</b></span>
+        <span>向量 <b>{{ info.embedding }}</b></span>
+      </template>
+      <span v-if="notReady" class="err">服务未就绪（{{ notReady }}）</span>
+    </div>
+    <div class="field">
+      <label for="openid">测试身份</label>
+      <input id="openid" v-model="openid" @change="saveOpenid" spellcheck="false">
+      <button class="inspect" @click="loadHistory">载入历史</button>
+      <button class="inspect" @click="messages = []">清空画面</button>
+    </div>
+  </header>
+
+  <main ref="log">
+    <div v-for="(m, i) in messages" :key="i" :class="['row', m.role]">
+      <div :class="['bubble', { failed: m.failed }]">
+        <template v-if="m.role === 'user'">
+          <div>{{ m.text }}</div>
+          <div v-if="m.inspecting" class="meta">检索中…</div>
+          <div v-else-if="m.inspect" class="meta">
+            <div>
+              <span class="tag">检索证据</span>
+              <span :class="m.inspect.decision === 'matched' ? 'ok' : 'warn'">
+                {{ decisionLabel(m.inspect) }}
+              </span>
+            </div>
+            <div class="cands">
+              <div v-for="c in m.inspect.candidates.slice(0, 5)" :key="c.unit_id" class="cand">
+                <span class="score">{{ c.score.toFixed(3) }}</span>
+                <span class="body">{{ c.text }}</span>
+              </div>
+              <div v-if="!m.inspect.candidates.length" class="cand">无合格候选</div>
+            </div>
+          </div>
+          <div v-else class="meta"><button class="inspect" @click="inspect(m)">查看检索</button></div>
+        </template>
+        <template v-else>
+          <div>{{ m.text }}</div>
+          <div v-if="m.delivery || m.notes.length" class="meta">
+            <span v-if="m.delivery" class="tag" :class="deliveryClass(m.delivery)">{{ deliveryLabel(m.delivery) }}</span>
+            <span v-if="m.retrieval" class="tag">{{ retrievalLabel(m.retrieval) }}</span>
+            <span v-if="m.turn_status && m.turn_status !== 'completed'" class="tag bad">轮次 {{ m.turn_status }}</span>
+          </div>
+        </template>
+      </div>
+    </div>
+    <div v-if="busy" class="row bot"><div class="bubble typing">思考中… {{ elapsed }}s</div></div>
+  </main>
+
+  <footer>
+    <textarea v-model="draft" @keydown.enter.exact.prevent="send" placeholder="说点什么…（Enter 发送，Shift+Enter 换行）"></textarea>
+    <button @click="send" :disabled="busy || !draft.trim()">发送</button>
+  </footer>
+</div>
+
+<script>
+const { createApp, ref, onMounted, nextTick } = Vue;
+
+createApp({
+  setup() {
+    const info = ref({});
+    const messages = ref([]);
+    const draft = ref('');
+    const busy = ref(false);
+    const elapsed = ref(0);
+    const openid = ref(localStorage.getItem('sana.openid') || 'openid-web-test');
+    const log = ref(null);
+    let timer = null;
+
+    const short = (v) => (v ? String(v).slice(0, 8) : '—');
+    const saveOpenid = () => localStorage.setItem('sana.openid', openid.value);
+    const notReady = ref('');
+
+    async function scrollDown() {
+      await nextTick();
+      if (log.value) log.value.scrollTop = log.value.scrollHeight;
+    }
+
+    async function loadStatus() {
+      try {
+        const res = await fetch('/api/status');
+        info.value = await res.json();
+      } catch (e) {
+        info.value = { error: '无法连接本地聊天台服务' };
+      }
+    }
+
+    async function loadHistory() {
+      saveOpenid();
+      try {
+        const res = await fetch('/api/history?openid=' + encodeURIComponent(openid.value));
+        const data = await res.json();
+        messages.value = [];
+        for (const item of data.items || []) {
+          messages.value.push({ role: 'user', text: item.text, inspect: null, inspecting: false });
+          if (item.reply) {
+            messages.value.push({
+              role: 'bot', text: item.reply,
+              delivery: item.status ? { status: item.status, error: item.error } : null,
+              turn_status: null, notes: [],
+              retrieval: { matched: true, threshold: info.value.threshold, candidates: [] },
+            });
+          }
+        }
+        await scrollDown();
+      } catch (e) {
+        messages.value.push({ role: 'bot', text: '载入历史失败：' + e.message, failed: true, notes: [] });
+      }
+    }
+
+    async function inspect(message) {
+      message.inspecting = true;
+      await scrollDown();
+      try {
+        const res = await fetch('/api/inspect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: message.text }),
+        });
+        const data = await res.json();
+        message.inspect = data.error ? null : data;
+        if (data.error) message.text += '\n[检索失败] ' + data.error;
+      } catch (e) {
+        message.text += '\n[检索失败] ' + e.message;
+      } finally {
+        message.inspecting = false;
+      }
+    }
+
+    async function poll(msgId) {
+      for (let i = 0; i < 80; i += 1) {
+        const res = await fetch('/api/turn/' + msgId);
+        const data = await res.json();
+        if (data.state === 'done') return data;
+        if (data.state === 'unknown') return { ...data, failed: true };
+        if (data.turn_status === 'failed') return { ...data, failed: true };
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+      return { state: 'timeout', text: '等待超时，请稍后用「载入历史」查看结果。', failed: true };
+    }
+
+    async function send() {
+      const text = draft.value.trim();
+      if (!text || busy.value) return;
+      saveOpenid();
+      messages.value.push({ role: 'user', text, inspect: null, inspecting: false });
+      draft.value = '';
+      busy.value = true;
+      elapsed.value = 0;
+      timer = setInterval(() => { elapsed.value += 1; }, 1000);
+      await scrollDown();
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ openid: openid.value, text }),
+        });
+        const data = await res.json();
+        if (data.error) {
+          notReady.value = data.error;
+          messages.value.push({ role: 'bot', text: '投递失败：' + data.error, failed: true, notes: [] });
+        } else {
+          notReady.value = '';
+          const turn = await poll(data.msg_id);
+          if (turn.state === 'done') {
+            messages.value.push({
+              role: 'bot', text: turn.reply, delivery: turn.delivery,
+              retrieval: turn.retrieval, turn_status: turn.turn_status, notes: turn.notes || [],
+            });
+          } else {
+            messages.value.push({ role: 'bot', text: turn.text, failed: true, notes: turn.notes || [] });
+          }
+        }
+      } catch (e) {
+        messages.value.push({ role: 'bot', text: '请求失败：' + e.message, failed: true, notes: [] });
+      } finally {
+        busy.value = false;
+        clearInterval(timer);
+        await scrollDown();
+      }
+    }
+
+    const deliveryLabel = (d) => ({
+      confirmed: '已送达 QQ',
+      rejected: `未送达（平台拒绝：${d.error || '未知'}）`,
+      uncertain: '发送结果未知，需人工核对',
+    }[d.status] || `发送状态 ${d.status}`);
+
+    const deliveryClass = (d) => ({ confirmed: 'ok', rejected: 'bad', uncertain: 'warn' }[d.status] || '');
+
+    const retrievalLabel = (r) => (r.matched
+      ? `命中资料 · 门槛 ${r.threshold ?? '—'}`
+      : `未命中 → 兜底 ${r.fallback_kind || ''} · ${r.candidate_count ?? 0} 候选 · 门槛 ${r.threshold ?? '—'}`);
+
+    const decisionLabel = (r) => (r.decision === 'matched'
+      ? `命中 · 门槛 ${r.threshold ?? '—'}`
+      : `${r.decision} · 门槛 ${r.threshold ?? '—'}`);
+
+    onMounted(async () => {
+      await loadStatus();
+    });
+
+    return { info, messages, draft, busy, elapsed, openid, log, notReady, short, saveOpenid,
+             loadHistory, inspect, send, deliveryLabel, deliveryClass, retrievalLabel, decisionLabel };
+  },
+}).mount('#app');
+</script>
+</body>
+</html>

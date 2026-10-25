@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "大模型生成数据流",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1080,
+      780
+    ]
+  },
+  "stages": [
+    {
+      "label": "输入"
+    },
+    {
+      "label": "上下文组装"
+    },
+    {
+      "label": "模型与工具"
+    },
+    {
+      "label": "输出治理"
+    },
+    {
+      "label": "消费者"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "text",
+      "type": "frontend",
+      "label": "文本/图片输入",
+      "sublabel": "requestId + attachments",
+      "stage": 0,
+      "row": 0
+    },
+    {
+      "id": "voice",
+      "type": "frontend",
+      "label": "麦克风 PCM",
+      "sublabel": "48k → 16k",
+      "stage": 0,
+      "row": 3
+    },
+    {
+      "id": "context",
+      "type": "backend",
+      "label": "Turn Context",
+      "sublabel": "记忆 / 历史 / 图片",
+      "stage": 1,
+      "row": 1
+    },
+    {
+      "id": "pending",
+      "type": "messagebus",
+      "label": "Pending Input",
+      "sublabel": "启动/热切换期间保序",
+      "stage": 1,
+      "row": 3
+    },
+    {
+      "id": "model",
+      "type": "cloud",
+      "label": "Provider Stream",
+      "sublabel": "text/audio/tool calls",
+      "stage": 2,
+      "row": 1
+    },
+    {
+      "id": "tool",
+      "type": "external",
+      "label": "Tool Loop",
+      "sublabel": "执行并追加结果",
+      "stage": 2,
+      "row": 3
+    },
+    {
+      "id": "guard",
+      "type": "backend",
+      "label": "输出治理",
+      "sublabel": "长度 / 重复 / 泄漏过滤",
+      "stage": 3,
+      "row": 1
+    },
+    {
+      "id": "callbacks",
+      "type": "messagebus",
+      "label": "Session Callbacks",
+      "sublabel": "expected-session guard",
+      "stage": 3,
+      "row": 3
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "聊天与字幕",
+      "sublabel": "gemini_response",
+      "stage": 4,
+      "row": 0
+    },
+    {
+      "id": "tts",
+      "type": "backend",
+      "label": "TTS / 原生音频",
+      "sublabel": "speech_id",
+      "stage": 4,
+      "row": 2
+    },
+    {
+      "id": "memory",
+      "type": "database",
+      "label": "记忆与插件总线",
+      "sublabel": "已提交回合",
+      "stage": 4,
+      "row": 4
+    }
+  ],
+  "flows": [
+    {
+      "from": "text",
+      "to": "context",
+      "label": "文本 + 预算化图片",
+      "variant": "emphasis"
+    },
+    {
+      "from": "voice",
+      "to": "pending",
+      "label": "有界音频队列"
+    },
+    {
+      "from": "pending",
+      "to": "context",
+      "label": "激活后刷入"
+    },
+    {
+      "from": "context",
+      "to": "model",
+      "label": "规范消息/多模态内容",
+      "variant": "emphasis"
+    },
+    {
+      "from": "model",
+      "to": "tool",
+      "label": "工具调用",
+      "labelDy": 30
+    },
+    {
+      "from": "tool",
+      "to": "guard",
+      "label": "工具结果",
+      "variant": "dashed"
+    },
+    {
+      "from": "model",
+      "to": "guard",
+      "label": "stream chunks",
+      "route": "straight"
+    },
+    {
+      "from": "guard",
+      "to": "callbacks",
+      "label": "受控输出",
+      "labelDy": 52
+    },
+    {
+      "from": "callbacks",
+      "to": "ui",
+      "label": "文本",
+      "labelAt": [900, 205]
+    },
+    {
+      "from": "callbacks",
+      "to": "tts",
+      "label": "音频",
+      "variant": "emphasis",
+      "labelDx": 35
+    },
+    {
+      "from": "callbacks",
+      "to": "memory",
+      "label": "回合提交"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "图像所有权",
+      "items": [
+        "主动截图、插件图、采集帧、用户附件按相关性排序",
+        "超预算先抽样/压缩，失败时回滚队列"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "路由私有状态",
+      "items": [
+        "切 endpoint 时移除 vendor 私有 tool-call extras",
+        "建议彻底分离内部消息与 wire payload"
+      ]
+    }
+  ]
+}

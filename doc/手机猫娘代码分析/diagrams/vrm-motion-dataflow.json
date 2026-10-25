@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "VRM 动作控制数据流",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1080,
+      760
+    ]
+  },
+  "stages": [
+    {
+      "label": "事件输入"
+    },
+    {
+      "label": "回合聚合"
+    },
+    {
+      "label": "语义决策"
+    },
+    {
+      "label": "播放调度"
+    },
+    {
+      "label": "模型输出"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "user",
+      "type": "frontend",
+      "label": "用户文本",
+      "sublabel": "requestId 上下文",
+      "stage": 0,
+      "row": 0
+    },
+    {
+      "id": "assistant",
+      "type": "frontend",
+      "label": "助手流式文本",
+      "sublabel": "闭合阶段 / turn end",
+      "stage": 0,
+      "row": 2
+    },
+    {
+      "id": "emotion",
+      "type": "frontend",
+      "label": "正式情绪",
+      "sublabel": "emotion-ready",
+      "stage": 0,
+      "row": 4
+    },
+    {
+      "id": "turn",
+      "type": "messagebus",
+      "label": "activeTurn",
+      "sublabel": "文本、阶段、情绪",
+      "stage": 1,
+      "row": 2
+    },
+    {
+      "id": "analyze",
+      "type": "backend",
+      "label": "MotionCore",
+      "sublabel": "否定/假设/短语证据",
+      "stage": 2,
+      "row": 1
+    },
+    {
+      "id": "plan",
+      "type": "database",
+      "label": "动作计划",
+      "sublabel": "意图、强度、姿态",
+      "stage": 2,
+      "row": 3
+    },
+    {
+      "id": "select",
+      "type": "backend",
+      "label": "MotionPlayer",
+      "sublabel": "选资产 + 排队 + 恢复",
+      "stage": 3,
+      "row": 2
+    },
+    {
+      "id": "vrma",
+      "type": "frontend",
+      "label": "VRMAnimation",
+      "sublabel": "加载并 crossfade",
+      "stage": 4,
+      "row": 2
+    },
+    {
+      "id": "bones",
+      "type": "frontend",
+      "label": "VRM humanoid bones",
+      "sublabel": "最终姿态",
+      "stage": 4,
+      "row": 4
+    }
+  ],
+  "flows": [
+    {
+      "from": "user",
+      "to": "turn",
+      "label": "关联用户意图",
+      "variant": "emphasis"
+    },
+    {
+      "from": "assistant",
+      "to": "turn",
+      "label": "增量/完整回复",
+      "variant": "emphasis",
+      "labelAt": [120, 300]
+    },
+    {
+      "from": "emotion",
+      "to": "turn",
+      "label": "身体情绪意图"
+    },
+    {
+      "from": "turn",
+      "to": "analyze",
+      "label": "证据窗口"
+    },
+    {
+      "from": "analyze",
+      "to": "plan",
+      "label": "最多 3 项",
+      "labelDy": 24
+    },
+    {
+      "from": "plan",
+      "to": "select",
+      "label": "顺序计划",
+      "variant": "emphasis"
+    },
+    {
+      "from": "select",
+      "to": "vrma",
+      "label": "兼容 VRMA + 播放参数",
+      "variant": "emphasis",
+      "labelDy": 53
+    },
+    {
+      "from": "vrma",
+      "to": "bones",
+      "label": "AnimationMixer 每帧更新",
+      "labelAt": [960, 450]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "抢占",
+      "items": [
+        "取消、切模型和外部播放都会提升 generation",
+        "过期异步加载结果不得落地"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "回落",
+      "items": [
+        "短动作结束后恢复当前姿态基线",
+        "待机资产按稳定种子与画像选择"
+      ]
+    }
+  ]
+}

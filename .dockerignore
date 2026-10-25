@@ -1,0 +1,35 @@
+# 构建上下文裁剪：镜像里不需要的数据一律不进上下文
+
+# 版本控制与本地环境
+.git/
+.gitignore
+.venv/
+.uv-cache/
+.cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+
+# 运行数据：绝不烘焙进镜像（运行时用卷挂载）
+runtime/
+!runtime/.gitkeep
+
+# 密钥与本地配置
+.env
+.env.*
+!.env.example
+
+# 测试与开发工具
+tests/
+tools/
+.specify/
+.agents/
+specs/
+live2d/
+vrm/
+
+# 其他
+*.log
+.DS_Store
+Thumbs.db

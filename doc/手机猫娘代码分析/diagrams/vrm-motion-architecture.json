@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VRM 动作控制架构",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1280,
+      760
+    ],
+    "repository": {
+      "url": "https://github.com/Project-N-E-K-O/N.E.K.O",
+      "revision": "9108054fdc9840a9be27526362b4920d31fd270d"
+    }
+  },
+  "components": [
+    {
+      "id": "events",
+      "type": "frontend",
+      "label": "助手生命周期事件",
+      "sublabel": "用户 / 回复 / 情绪 / 取消",
+      "pos": [
+        40,
+        290
+      ],
+      "size": [
+        170,
+        72
+      ],
+      "sources": [
+        {
+          "path": "static/vrm/motion/bridge.js",
+          "line": 182
+        }
+      ]
+    },
+    {
+      "id": "bridge",
+      "type": "messagebus",
+      "label": "NekoMotionBridge",
+      "sublabel": "CustomEvent + BroadcastChannel",
+      "pos": [
+        250,
+        290
+      ],
+      "size": [
+        170,
+        72
+      ],
+      "sources": [
+        {
+          "path": "static/vrm/motion/bridge.js",
+          "line": 101
+        }
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "Motion Runtime",
+      "sublabel": "回合聚合 / 情绪持续态 / 所有权",
+      "pos": [
+        460,
+        290
+      ],
+      "size": [
+        170,
+        72
+      ],
+      "sources": [
+        {
+          "path": "static/vrm/motion/runtime.js",
+          "line": 45
+        }
+      ]
+    },
+    {
+      "id": "semantic",
+      "type": "backend",
+      "label": "Motion Core",
+      "sublabel": "本地语义规则与计划",
+      "pos": [
+        670,
+        150
+      ],
+      "size": [
+        170,
+        72
+      ],
+      "sources": [
+        {
+          "path": "static/vrm/motion/core.js",
+          "line": 1291
+        }
+      ]
+    },
+    {
+      "id": "catalog",
+      "type": "database",
+      "label": "动作语义与资产目录",
+      "sublabel": "semantics.json + manifest.json",
+      "pos": [
+        670,
+        430
+      ],
+      "size": [
+        170,
+        72
+      ]
+    },
+    {
+      "id": "player",
+      "type": "backend",
+      "label": "Motion Player",
+      "sublabel": "姿态约束 / 队列 / 资产选择",
+      "pos": [
+        880,
+        290
+      ],
+      "size": [
+        170,
+        72
+      ],
+      "sources": [
+        {
+          "path": "static/vrm/motion/player.js",
+          "line": 963
+        }
+      ]
+    },
+    {
+      "id": "animation",
+      "type": "frontend",
+      "label": "VRMAnimation",
+      "sublabel": "VRMA / Mixer / crossfade",
+      "pos": [
+        1080,
+        290
+      ],
+      "size": [
+        170,
+        72
+      ],
+      "sources": [
+        {
+          "path": "static/vrm/vrm-animation.js",
+          "line": 669
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "events",
+      "to": "bridge",
+      "variant": "emphasis"
+    },
+    {
+      "from": "bridge",
+      "to": "runtime",
+      "variant": "default"
+    },
+    {
+      "from": "runtime",
+      "to": "semantic",
+      "label": "文本 + 情绪 + 人格"
+    },
+    {
+      "from": "semantic",
+      "to": "player",
+      "label": "动作计划 ≤ 3"
+    },
+    {
+      "from": "catalog",
+      "to": "semantic",
+      "label": "规则"
+    },
+    {
+      "from": "catalog",
+      "to": "player",
+      "label": "VRMA 元数据"
+    },
+    {
+      "from": "player",
+      "to": "animation",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "决策边界",
+      "items": [
+        "动作语义在浏览器本地解析，不逐回合调用 LLM",
+        "正式情绪可转换为身体动作意图"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "并发安全",
+      "items": [
+        "queueGeneration 取消过期计划",
+        "外部播放所有权阻止自动动作争抢 mixer"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "姿态约束",
+      "items": [
+        "资产声明进入/退出姿态",
+        "缺少兼容动作时优先跳过而非强制起身"
+      ]
+    }
+  ]
+}

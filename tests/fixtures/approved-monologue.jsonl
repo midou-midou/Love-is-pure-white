@@ -1,0 +1,6 @@
+# 独白检索样本：stage=monologue；positive 表示应在沉默期发送独白
+# 这些是仓库占位样本，不是独白资料提供者确认的样本；未指定 expected 时按最高分度量。
+{"kind": "retrieval", "stage": "monologue", "query": "猫咪来了，闹得不行", "positive": true, "note": "独白与情景匹配"}
+{"kind": "retrieval", "stage": "monologue", "query": "其实心里挺高兴的", "positive": true, "note": "心情匹配"}
+{"kind": "retrieval", "stage": "monologue", "query": "帮我写一段快速排序代码", "positive": false, "note": "无关内容不得触发独白"}
+{"kind": "retrieval", "stage": "monologue", "query": "明天开会几点", "positive": false, "note": "通用闲聊不应触发独白"}

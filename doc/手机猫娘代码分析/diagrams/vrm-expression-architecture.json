@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VRM 表情控制架构",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1180,
+      760
+    ],
+    "repository": {
+      "url": "https://github.com/Project-N-E-K-O/N.E.K.O",
+      "revision": "9108054fdc9840a9be27526362b4920d31fd270d"
+    }
+  },
+  "components": [
+    {
+      "id": "turnend",
+      "type": "frontend",
+      "label": "回合收尾",
+      "sublabel": "finalizeAssistantTurn",
+      "pos": [
+        40,
+        290
+      ],
+      "size": [
+        170,
+        72
+      ],
+      "sources": [
+        {
+          "path": "static/app/app-websocket.js",
+          "line": 1472
+        }
+      ]
+    },
+    {
+      "id": "emotionapi",
+      "type": "backend",
+      "label": "情绪分析 API",
+      "sublabel": "独立 emotion 模型槽",
+      "pos": [
+        250,
+        150
+      ],
+      "size": [
+        170,
+        72
+      ],
+      "sources": [
+        {
+          "path": "main_routers/system_router/emotion.py",
+          "line": 918
+        }
+      ]
+    },
+    {
+      "id": "lifecycle",
+      "type": "messagebus",
+      "label": "情绪生命周期事件",
+      "sublabel": "applyEmotion + emotion-ready",
+      "pos": [
+        460,
+        290
+      ],
+      "size": [
+        170,
+        72
+      ],
+      "sources": [
+        {
+          "path": "static/app/app-websocket.js",
+          "line": 1521
+        }
+      ]
+    },
+    {
+      "id": "mapping",
+      "type": "database",
+      "label": "模型情绪映射",
+      "sublabel": "emotion → expression weights",
+      "pos": [
+        430,
+        430
+      ],
+      "size": [
+        170,
+        72
+      ],
+      "sources": [
+        {
+          "path": "static/vrm/configs/sister1.0_emotion.json"
+        }
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "frontend",
+      "label": "VRMExpression",
+      "sublabel": "mood / blink / 平滑 / neutral 回归",
+      "pos": [
+        670,
+        290
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "static/vrm/vrm-expression.js",
+          "line": 267
+        }
+      ]
+    },
+    {
+      "id": "manager",
+      "type": "frontend",
+      "label": "VRM expressionManager",
+      "sublabel": "blendshape 权重",
+      "pos": [
+        910,
+        290
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "configui",
+      "type": "frontend",
+      "label": "情绪映射配置 UI",
+      "sublabel": "读写模型专属配置",
+      "pos": [
+        670,
+        110
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "static/js/vrm_emotion_manager.js",
+          "line": 493
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "turnend",
+      "to": "emotionapi",
+      "variant": "emphasis"
+    },
+    {
+      "from": "emotionapi",
+      "to": "lifecycle",
+      "variant": "default"
+    },
+    {
+      "from": "lifecycle",
+      "to": "controller",
+      "variant": "emphasis"
+    },
+    {
+      "from": "mapping",
+      "to": "controller",
+      "variant": "default"
+    },
+    {
+      "from": "controller",
+      "to": "manager",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "分离职责",
+      "items": [
+        "小模型只判断语义情绪",
+        "VRMExpression 只负责映射与渲染"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "降级",
+      "items": [
+        "情绪分析 5 秒超时",
+        "失败不阻塞主回合"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "并行消费者",
+      "items": [
+        "emotion-ready 同时驱动动作系统与反应气泡"
+      ]
+    }
+  ]
+}

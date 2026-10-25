@@ -1,0 +1,237 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "大模型生成架构",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1280,
+      780
+    ],
+    "repository": {
+      "url": "https://github.com/Project-N-E-K-O/N.E.K.O",
+      "revision": "9108054fdc9840a9be27526362b4920d31fd270d"
+    }
+  },
+  "components": [
+    {
+      "id": "browser",
+      "type": "frontend",
+      "label": "浏览器 / Electron",
+      "sublabel": "文本、图片、48k PCM",
+      "pos": [
+        10,
+        300
+      ],
+      "size": [
+        170,
+        72
+      ]
+    },
+    {
+      "id": "ws",
+      "type": "messagebus",
+      "label": "Main WebSocket",
+      "sublabel": "/ws/{lanlan_name}",
+      "pos": [
+        210,
+        300
+      ],
+      "size": [
+        170,
+        72
+      ]
+    },
+    {
+      "id": "manager",
+      "type": "backend",
+      "label": "LLMSessionManager",
+      "sublabel": "每角色会话协调器",
+      "pos": [
+        420,
+        300
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "main_logic/core/manager.py",
+          "line": 50
+        }
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "database",
+      "label": "Memory Server",
+      "sublabel": "启动上下文 / 持久记忆",
+      "pos": [
+        420,
+        100
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "offline",
+      "type": "backend",
+      "label": "OmniOfflineClient",
+      "sublabel": "文本/视觉/工具流",
+      "pos": [
+        650,
+        180
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "main_logic/omni_offline_client/_client.py",
+          "line": 53
+        }
+      ]
+    },
+    {
+      "id": "realtime",
+      "type": "backend",
+      "label": "OmniRealtimeClient",
+      "sublabel": "语音/ASR/原生音频",
+      "pos": [
+        650,
+        420
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "factory",
+      "type": "backend",
+      "label": "LLM Client Factory",
+      "sublabel": "OpenAI / Anthropic / Gemini",
+      "pos": [
+        860,
+        180
+      ],
+      "size": [
+        190,
+        72
+      ],
+      "sources": [
+        {
+          "path": "utils/llm_client/factory.py",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "id": "provider",
+      "type": "cloud",
+      "label": "模型供应商 API",
+      "sublabel": "stream + tools + multimodal",
+      "pos": [
+        1090,
+        300
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "external",
+      "label": "工具 / 插件 / Agent",
+      "sublabel": "工具结果回填模型历史",
+      "pos": [
+        180,
+        520
+      ],
+      "size": [
+        190,
+        72
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "browser",
+      "to": "ws",
+      "variant": "emphasis"
+    },
+    {
+      "from": "ws",
+      "to": "manager",
+      "variant": "emphasis"
+    },
+    {
+      "from": "memory",
+      "to": "manager",
+      "variant": "dashed"
+    },
+    {
+      "from": "manager",
+      "to": "offline",
+      "variant": "emphasis"
+    },
+    {
+      "from": "manager",
+      "to": "realtime",
+      "variant": "emphasis"
+    },
+    {
+      "from": "offline",
+      "to": "factory",
+      "variant": "default"
+    },
+    {
+      "from": "factory",
+      "to": "provider",
+      "variant": "default"
+    },
+    {
+      "from": "realtime",
+      "to": "provider",
+      "variant": "default"
+    },
+    {
+      "from": "manager",
+      "to": "tools",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "模式边界",
+      "items": [
+        "文本与语音使用不同客户端",
+        "跨模式切换通过重建而非原地切换"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "可靠性",
+      "items": [
+        "pending input 保序",
+        "expected session 阻止旧回调污染新会话",
+        "启动失败熔断与热切换"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "多供应商",
+      "items": [
+        "内部统一消息与流式接口",
+        "视觉槽可配置独立 endpoint 和凭证"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "format_version": "structural_v2",
+  "chunking_strategy": "markdown_cards_v1",
+  "character": "sana",
+  "story_stage": "测试时间线",
+  "required_relationship": "romantic",
+  "source_root": "docs",
+  "profile_version": "minimal-profile-1",
+  "policy_version": "minimal-policy-1",
+  "catalog_version": "minimal-catalog-1",
+  "included_files": [
+    {
+      "path": "01_core.md",
+      "role": "core"
+    },
+    {
+      "path": "02_output.md",
+      "role": "output"
+    },
+    {
+      "path": "03_emotion.md",
+      "role": "emotion"
+    },
+    {
+      "path": "04_scene.md",
+      "role": "scene"
+    },
+    {
+      "path": "05_lore.md",
+      "role": "background"
+    },
+    {
+      "path": "06_examples.md",
+      "role": "example"
+    }
+  ],
+  "excluded_files": [],
+  "resident_ids": [
+    "sana_core",
+    "sana_output",
+    "sana_emotion_general"
+  ],
+  "resident_sources": {
+    "sana_core": "01_core.md",
+    "sana_output": "02_output.md",
+    "sana_emotion_general": "03_emotion.md"
+  },
+  "expected_counts": {
+    "resident": 3,
+    "cards": 6,
+    "encoded": 5,
+    "emotion": 3,
+    "scene": 1,
+    "lore": 1,
+    "example": 1
+  },
+  "card_conditions": {
+    "sana_emotion_general": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": [],
+      "resident": true
+    },
+    "sana_emotion_calm": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": [],
+      "card_states": [
+        "sana_emotion_calm"
+      ]
+    },
+    "sana_emotion_shy": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": [
+        "害羞局促"
+      ],
+      "card_states": [
+        "sana_emotion_shy"
+      ]
+    },
+    "sana_scene_share": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": []
+    },
+    "sana_lore_family": {
+      "relationship": "any",
+      "scene": "any",
+      "medium": "any",
+      "state_tags": []
+    },
+    "sana_example_calm": {
+      "relationship": "romantic",
+      "scene": "any",
+      "medium": "text",
+      "state_tags": []
+    }
+  },
+  "state_catalog": {
+    "version": "minimal-catalog-1",
+    "primary_moods": [
+      "neutral",
+      "happy",
+      "angry",
+      "sad"
+    ],
+    "event_tags": [
+      "steady_daily",
+      "direct_praise",
+      "being_comforted"
+    ],
+    "states": [
+      {
+        "id": "sana_emotion_calm",
+        "label": "平稳常态",
+        "primary": "neutral",
+        "tags": [
+          "平稳常态"
+        ],
+        "card_id": "sana_emotion_calm",
+        "priority": 1,
+        "from_states": [
+          "*"
+        ],
+        "event_tags": [
+          "steady_daily"
+        ],
+        "relationship": "romantic",
+        "scene": "any"
+      },
+      {
+        "id": "sana_emotion_shy",
+        "label": "害羞局促",
+        "primary": "happy",
+        "tags": [
+          "害羞局促"
+        ],
+        "card_id": "sana_emotion_shy",
+        "priority": 5,
+        "from_states": [
+          "*"
+        ],
+        "event_tags": [
+          "direct_praise"
+        ],
+        "relationship": "romantic",
+        "scene": "any"
+      }
+    ],
+    "recoveries": [
+      {
+        "event_tag": "being_comforted",
+        "from_states": [
+          "害羞局促"
+        ],
+        "to_state": "sana_emotion_calm",
+        "note": "缓和"
+      }
+    ]
+  },
+  "budgets": {
+    "max_prompt_tokens": 2048,
+    "max_history_turns": 6,
+    "max_query_recent_user_messages": 3,
+    "max_example_cards": 2,
+    "max_supplements": 8,
+    "reserved_output_tokens": 160
+  },
+  "retrieval_policy": {
+    "version": "minimal-policy-1",
+    "order": [
+      "resident",
+      "state_rule",
+      "scene_rule",
+      "background",
+      "example"
+    ],
+    "threshold_stage": "reply",
+    "threshold_source": "calibration_report",
+    "unknown_scene_policy": "conservative"
+  }
+}

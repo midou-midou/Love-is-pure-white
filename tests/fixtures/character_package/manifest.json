@@ -1,0 +1,343 @@
+{
+  "note": "当前整理版的冻结统计与原始字节哈希；新增或减少资料必须产生新的核对结果",
+  "format_version": "structural_v2",
+  "chunking_strategy": "markdown_cards_v1",
+  "source_root": "doc/乾纱凪角色设定整理版",
+  "expected": {
+    "resident": 3,
+    "cards": 26,
+    "encoded": 25,
+    "by_type": {
+      "emotion_policy": 1,
+      "emotion_rule": 6,
+      "scene_rule": 6,
+      "background": 3,
+      "appearance": 1,
+      "profile": 2,
+      "dialogue_example": 7
+    }
+  },
+  "sources": [
+    {
+      "path": "01_核心设定.md",
+      "role": "core",
+      "byte_hash": "4aa2624e6d5407dc0aa2f49ce8c9a4ffee7a82be7add1d443a268d5b66119584",
+      "included": true,
+      "char_count": 1336
+    },
+    {
+      "path": "02_输出规范.md",
+      "role": "output",
+      "byte_hash": "20d924318cab461570a54b73fd50d3092c97c55913be8638739501710c086061",
+      "included": true,
+      "char_count": 645
+    },
+    {
+      "path": "03_情绪状态.md",
+      "role": "emotion",
+      "byte_hash": "dd7c34108047da5ca1fee16e7d252bf05a47b1e152c9fbfc385515d5ca626276",
+      "included": true,
+      "char_count": 2408
+    },
+    {
+      "path": "04_场景行为.md",
+      "role": "scene",
+      "byte_hash": "15e56f168f6fc1a679d9d939e5a6d76e5dea8bb7038214e18d483956f71f397c",
+      "included": true,
+      "char_count": 1404
+    },
+    {
+      "path": "05_背景资料.md",
+      "role": "background",
+      "byte_hash": "ebf6c28fa61540800029977f8c045a29d3a6d78fa8d1313edfd78d3c56078acf",
+      "included": true,
+      "char_count": 1662
+    },
+    {
+      "path": "06_对话示例.md",
+      "role": "example",
+      "byte_hash": "feb2f4c92a3d49c67630e6fcb659394aaddcfb1a894053e9f9b6270fbfae3f2a",
+      "included": true,
+      "char_count": 1362
+    },
+    {
+      "path": "00_加载说明.md",
+      "role": "maintenance",
+      "byte_hash": "bcad372d1307225605ec75288067cd9e46fb4933851e24f209e3e671b0c3114e",
+      "included": false,
+      "char_count": 0
+    },
+    {
+      "path": "07_整理记录与待配置.md",
+      "role": "maintenance",
+      "byte_hash": "c0b7046515f8d28a2c12ebca85b9a1d636a786d54cae7da2a0606bfbc9b93404",
+      "included": false,
+      "char_count": 0
+    }
+  ],
+  "excluded": [
+    "00_加载说明.md",
+    "07_整理记录与待配置.md"
+  ],
+  "residents": [
+    {
+      "resident_id": "sana_core",
+      "ordinal": 0,
+      "title": "乾纱凪核心设定",
+      "content_hash": "7c42015b116d4ac4bbeaf14c0127cf5d219fecb1312002e4281d80ceae41490b",
+      "char_count": 1335
+    },
+    {
+      "resident_id": "sana_output",
+      "ordinal": 1,
+      "title": "乾纱凪角色对话输出规范",
+      "content_hash": "f0a6f9ffb7504b98bbc897aea6928042ab54b48bea83728669d504dce57f7606",
+      "char_count": 644
+    },
+    {
+      "resident_id": "sana_emotion_general",
+      "ordinal": 2,
+      "title": "状态总则",
+      "content_hash": "19d0391f8ea5ef9d1caa5d0df445b7703ad65b1bd7dee1f01e836da0adad79a5",
+      "char_count": 260
+    }
+  ],
+  "cards": [
+    {
+      "card_id": "sana_emotion_general",
+      "type": "emotion_policy",
+      "provenance": "source",
+      "heading": "状态总则",
+      "char_count": 260,
+      "turn_count": 0,
+      "resident_only": true
+    },
+    {
+      "card_id": "sana_emotion_calm",
+      "type": "emotion_rule",
+      "provenance": "source",
+      "heading": "平稳常态",
+      "char_count": 184,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_emotion_shy",
+      "type": "emotion_rule",
+      "provenance": "source",
+      "heading": "害羞局促",
+      "char_count": 193,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_emotion_flustered",
+      "type": "emotion_rule",
+      "provenance": "source",
+      "heading": "傲娇炸毛",
+      "char_count": 189,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_emotion_jealous",
+      "type": "emotion_rule",
+      "provenance": "source",
+      "heading": "吃醋三级及恢复机制",
+      "char_count": 318,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_emotion_hurt",
+      "type": "emotion_rule",
+      "provenance": "source",
+      "heading": "委屈脆弱",
+      "char_count": 214,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_emotion_secure",
+      "type": "emotion_rule",
+      "provenance": "source",
+      "heading": "安心依赖",
+      "char_count": 181,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_scene_share",
+      "type": "scene_rule",
+      "provenance": "source",
+      "heading": "分享日常与主动邀约",
+      "char_count": 222,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_scene_care",
+      "type": "scene_rule",
+      "provenance": "source",
+      "heading": "料理与照顾",
+      "char_count": 118,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_scene_praise",
+      "type": "scene_rule",
+      "provenance": "source",
+      "heading": "夸奖与直白情话",
+      "char_count": 96,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_scene_comfort",
+      "type": "scene_rule",
+      "provenance": "source",
+      "heading": "安慰用户",
+      "char_count": 111,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_scene_gift",
+      "type": "scene_rule",
+      "provenance": "source",
+      "heading": "礼物与纪念日",
+      "char_count": 77,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_scene_conflict",
+      "type": "scene_rule",
+      "provenance": "source",
+      "heading": "拌嘴与和好",
+      "char_count": 103,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_lore_family",
+      "type": "background",
+      "provenance": "source",
+      "heading": "家庭与乾理央",
+      "char_count": 96,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_lore_club",
+      "type": "background",
+      "provenance": "source",
+      "heading": "天羽美羽与喵喵社",
+      "char_count": 110,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_lore_relationship",
+      "type": "background",
+      "provenance": "source",
+      "heading": "与用户的关系发展",
+      "char_count": 143,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_lore_appearance",
+      "type": "appearance",
+      "provenance": "source",
+      "heading": "外貌与可选动作素材",
+      "char_count": 219,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_lore_preferences",
+      "type": "profile",
+      "provenance": "source",
+      "heading": "喜好与能力",
+      "char_count": 192,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_lore_places_names",
+      "type": "profile",
+      "provenance": "source",
+      "heading": "称呼与活动场所",
+      "char_count": 212,
+      "turn_count": 0,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_example_calm",
+      "type": "dialogue_example",
+      "provenance": "generated",
+      "heading": "平静接受邀约",
+      "char_count": 41,
+      "turn_count": 2,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_example_care",
+      "type": "dialogue_example",
+      "provenance": "adapted",
+      "heading": "自然关心",
+      "char_count": 38,
+      "turn_count": 2,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_example_shy",
+      "type": "dialogue_example",
+      "provenance": "generated",
+      "heading": "被戳破心意",
+      "char_count": 49,
+      "turn_count": 2,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_example_jealous",
+      "type": "dialogue_example",
+      "provenance": "generated",
+      "heading": "轻度吃醋与缓和",
+      "char_count": 97,
+      "turn_count": 4,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_example_hurt",
+      "type": "dialogue_example",
+      "provenance": "adapted",
+      "heading": "真正委屈",
+      "char_count": 50,
+      "turn_count": 2,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_example_share",
+      "type": "dialogue_example",
+      "provenance": "generated",
+      "heading": "主动分享与尊重空间",
+      "char_count": 79,
+      "turn_count": 3,
+      "resident_only": false
+    },
+    {
+      "card_id": "sana_example_gift",
+      "type": "dialogue_example",
+      "provenance": "generated",
+      "heading": "送出手工礼物",
+      "char_count": 40,
+      "turn_count": 1,
+      "resident_only": false
+    }
+  ],
+  "structure_hash": "d7e5505a8536bfc0251a4c50804110585f24d16033acc1c9880b8d83ece5eff8",
+  "source_set_hash": "1af55bbc9409cb4d729727dcf6728cfff7762930ab9779754cc80bb3c76710a2"
+}

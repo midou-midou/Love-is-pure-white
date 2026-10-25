@@ -1,0 +1,54 @@
+[project]
+name = "sana-bot"
+version = "0.1.0"
+description = "乾纱凪资料驱动与心情感知 QQ 单聊角色机器人"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "langchain>=1,<2",
+    "langchain-deepseek>=1.1.1,<2",
+    "numpy>=2,<3",
+    "python-docx>=1.2,<2",
+    "fastapi>=0.115,<1",
+    "uvicorn>=0.30,<1",
+    "httpx>=0.28,<1",
+    "pydantic>=2.9,<3",
+    "cryptography>=43,<51",
+]
+
+# 本地 HuggingFace 向量模型是可选的：默认（EMBEDDING_KIND=openai_compatible）不需要 torch。
+# 需要本地模型时安装：uv sync --extra local-embeddings
+[project.optional-dependencies]
+local-embeddings = [
+    "langchain-huggingface>=1.2.3,<2",
+    "sentence-transformers>=5.2,<6",
+]
+
+[project.scripts]
+sana-bot = "sana_bot.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8,<10",
+    "pytest-asyncio>=0.24,<2",
+    "respx>=0.21,<1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sana_bot"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+addopts = "--strict-markers --strict-config"
+markers = [
+    "live: 需要真实 DeepSeek/QQ 凭据与网络的验收测试",
+    "embedding: 需要预下载固定 revision 本地向量模型的测试",
+]
+filterwarnings = ["error::DeprecationWarning:sana_bot.*"]

@@ -1,0 +1,78 @@
+# 乾纱凪机器人：单实例部署。
+# 单进程 + SQLite(WAL) + 每用户串行队列，不要扩容副本（--scale > 1 会破坏去重与串行）。
+#
+# 常用命令：
+#   docker compose up -d --build                 # 仅应用（8000 只绑定回环，供本机/前置代理访问）
+#   docker compose --profile tls up -d --build   # 应用 + Caddy（自动申请 HTTPS 证书）
+#   docker compose run --rm app doctor --offline # 在容器内跑只读体检
+#   docker compose logs -f app
+
+name: sana-bot
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        INSTALL_LOCAL_EMBEDDINGS: "${INSTALL_LOCAL_EMBEDDINGS:-0}"
+        UV_DEFAULT_INDEX: "${UV_DEFAULT_INDEX:-}"
+    image: ${SANABOT_IMAGE:-sana-bot:latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      RUNTIME_DIR: /app/runtime
+      PORT: "8000"
+      TZ: "${TZ:-Asia/Shanghai}"
+    volumes:
+      # 运行数据（SQLite、索引快照、校准/评估报告、日志）必须持久化
+      - "${SANABOT_RUNTIME_DIR:-./runtime}:/app/runtime"
+    ports:
+      # 只监听回环：公网入口交给 Caddy 或你自己的 SLB/Nginx
+      - "127.0.0.1:${SANABOT_PORT:-8000}:8000"
+    # 宿主目录属主不是 10001 时，取消下面一行的注释并使用宿主 uid:gid
+    # user: "${SANABOT_UID:-10001}:${SANABOT_GID:-10001}"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).status == 200 else 1)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    stop_grace_period: 45s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  caddy:
+    image: caddy:2.8-alpine
+    profiles: ["tls"]
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      SANABOT_DOMAIN: "${SANABOT_DOMAIN:-}"
+      ACME_EMAIL: "${ACME_EMAIL:-}"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  caddy_data:
+  caddy_config:

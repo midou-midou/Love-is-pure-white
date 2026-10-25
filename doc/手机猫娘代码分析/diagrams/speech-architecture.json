@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "语音说话与口型架构",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1180,
+      760
+    ],
+    "repository": {
+      "url": "https://github.com/Project-N-E-K-O/N.E.K.O",
+      "revision": "9108054fdc9840a9be27526362b4920d31fd270d"
+    }
+  },
+  "components": [
+    {
+      "id": "manager",
+      "type": "backend",
+      "label": "LLMSessionManager",
+      "sublabel": "路由、speech_id、队列所有权",
+      "pos": [
+        40,
+        290
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "main_logic/core/tts_runtime.py",
+          "line": 1501
+        }
+      ]
+    },
+    {
+      "id": "native",
+      "type": "cloud",
+      "label": "实时模型原生音频",
+      "sublabel": "OmniRealtimeClient",
+      "pos": [
+        280,
+        110
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "queues",
+      "type": "messagebus",
+      "label": "TTS 请求/响应队列",
+      "sublabel": "线程边界 + 控制哨兵",
+      "pos": [
+        280,
+        360
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "main_logic/core/manager.py",
+          "line": 79
+        }
+      ]
+    },
+    {
+      "id": "dispatch",
+      "type": "backend",
+      "label": "Provider Dispatch",
+      "sublabel": "配置 + voice metadata + 优先级",
+      "pos": [
+        520,
+        360
+      ],
+      "size": [
+        190,
+        72
+      ],
+      "sources": [
+        {
+          "path": "main_logic/tts_client/__init__.py",
+          "line": 274
+        }
+      ]
+    },
+    {
+      "id": "workers",
+      "type": "cloud",
+      "label": "TTS Workers",
+      "sublabel": "WS 双向流 / HTTP 按句",
+      "pos": [
+        770,
+        360
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "socket",
+      "type": "messagebus",
+      "label": "浏览器 WebSocket",
+      "sublabel": "audio_chunk 头 + binary PCM",
+      "pos": [
+        980,
+        290
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "main_logic/core/tts_runtime.py",
+          "line": 1739
+        }
+      ]
+    },
+    {
+      "id": "webaudio",
+      "type": "frontend",
+      "label": "Web Audio 播放链",
+      "sublabel": "排程 / 中断 / 播放边界",
+      "pos": [
+        980,
+        500
+      ],
+      "size": [
+        180,
+        72
+      ]
+    },
+    {
+      "id": "lipsync",
+      "type": "frontend",
+      "label": "VRM Lip Sync",
+      "sublabel": "Formant 五元音 / aa 降级",
+      "pos": [
+        770,
+        560
+      ],
+      "size": [
+        180,
+        72
+      ],
+      "sources": [
+        {
+          "path": "static/vrm/vrm-animation.js",
+          "line": 864
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "manager",
+      "to": "native",
+      "variant": "dashed"
+    },
+    {
+      "from": "manager",
+      "to": "queues",
+      "variant": "emphasis"
+    },
+    {
+      "from": "queues",
+      "to": "dispatch",
+      "variant": "default"
+    },
+    {
+      "from": "dispatch",
+      "to": "workers",
+      "variant": "default"
+    },
+    {
+      "from": "native",
+      "to": "socket",
+      "variant": "dashed"
+    },
+    {
+      "from": "workers",
+      "to": "socket",
+      "variant": "emphasis"
+    },
+    {
+      "from": "socket",
+      "to": "webaudio",
+      "variant": "emphasis"
+    },
+    {
+      "from": "webaudio",
+      "to": "lipsync",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "统一音频合同",
+      "items": [
+        "48 kHz mono signed int16 LE PCM",
+        "speech_id 贯穿合成、播放与中断"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "供应商扩展",
+      "items": [
+        "所有 worker 使用统一队列签名",
+        "每个 worker 负责自身采样率转换"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "背压边界",
+      "items": [
+        "线程队列跨越 asyncio 与阻塞 SDK",
+        "中断需清空晚到音频并屏蔽回调"
+      ]
+    }
+  ]
+}

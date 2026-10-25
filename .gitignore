@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+
+# 运行目录：SQLite、向量快照、模型清单、核对与校准报告、对话数据
+runtime/
+!runtime/.gitkeep
+
+# 模型缓存（本地向量模型按固定 revision 预下载，不进版本控制）
+.cache/
+.huggingface/
+.models/
+*.safetensors
+*.bin
+*.onnx
+
+# 凭据与真实配置：仓库只保留空模板
+.env
+.env.*
+!.env.example
+
+# 工具
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# 操作系统
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp

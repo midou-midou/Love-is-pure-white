@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "语音说话与口型数据流",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1080,
+      760
+    ]
+  },
+  "stages": [
+    {
+      "label": "文本输入"
+    },
+    {
+      "label": "合成路由"
+    },
+    {
+      "label": "音频归一化"
+    },
+    {
+      "label": "浏览器播放"
+    },
+    {
+      "label": "角色表现"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "delta",
+      "type": "backend",
+      "label": "LLM text delta",
+      "sublabel": "speech_id",
+      "stage": 0,
+      "row": 1
+    },
+    {
+      "id": "clean",
+      "type": "backend",
+      "label": "TTS 文本清洗",
+      "sublabel": "Markdown/括号/空白",
+      "stage": 1,
+      "row": 0
+    },
+    {
+      "id": "route",
+      "type": "backend",
+      "label": "语音路由",
+      "sublabel": "native 或 external",
+      "stage": 1,
+      "row": 2
+    },
+    {
+      "id": "provider",
+      "type": "cloud",
+      "label": "TTS Provider",
+      "sublabel": "流式或按句请求",
+      "stage": 2,
+      "row": 1
+    },
+    {
+      "id": "pcm",
+      "type": "messagebus",
+      "label": "48 kHz PCM",
+      "sublabel": "response queue",
+      "stage": 2,
+      "row": 3
+    },
+    {
+      "id": "ws",
+      "type": "messagebus",
+      "label": "WebSocket frames",
+      "sublabel": "header 后跟 binary",
+      "stage": 3,
+      "row": 1
+    },
+    {
+      "id": "audio",
+      "type": "frontend",
+      "label": "Web Audio",
+      "sublabel": "调度与真实播放",
+      "stage": 3,
+      "row": 3
+    },
+    {
+      "id": "mouth",
+      "type": "frontend",
+      "label": "五元音口型",
+      "sublabel": "aa/ih/ou/ee/oh",
+      "stage": 4,
+      "row": 2
+    },
+    {
+      "id": "playevents",
+      "type": "frontend",
+      "label": "播放边界事件",
+      "sublabel": "主动消息播放闸门",
+      "stage": 4,
+      "row": 4
+    }
+  ],
+  "flows": [
+    {
+      "from": "delta",
+      "to": "clean",
+      "label": "文本片段",
+      "variant": "emphasis"
+    },
+    {
+      "from": "clean",
+      "to": "route",
+      "label": "规范文本",
+      "labelDy": 24
+    },
+    {
+      "from": "route",
+      "to": "provider",
+      "label": "provider 请求"
+    },
+    {
+      "from": "provider",
+      "to": "pcm",
+      "label": "重采样音频",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "from": "pcm",
+      "to": "ws",
+      "label": "audio_chunk + binary"
+    },
+    {
+      "from": "ws",
+      "to": "audio",
+      "label": "按 speech_id 排程",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "from": "audio",
+      "to": "mouth",
+      "label": "频谱能量/共振峰"
+    },
+    {
+      "from": "audio",
+      "to": "playevents",
+      "label": "实际播放边界"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "控制项",
+      "items": [
+        "done：结束当前话语但保留 worker",
+        "interrupt：停止合成并静音晚到回调",
+        "shutdown：退出线程"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "口型降级",
+      "items": [
+        "优先五元音共振峰",
+        "分析器不可用时以音量驱动 aa"
+      ]
+    }
+  ]
+}

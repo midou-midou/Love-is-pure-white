@@ -1,0 +1,14 @@
+# 切分样本：kind=split，标注相邻两句是否同一话题（人工确认的边界依据）
+{"kind": "split", "left": "今天社团来了一只流浪猫，毛软软的", "right": "它还特别喜欢蹭人的裤脚，一直跟着我", "same_topic": true, "note": "同一情景延续"}
+{"kind": "split", "left": "今天社团来了一只流浪猫，毛软软的", "right": "说到点心，附近新开了和果子店", "same_topic": false, "note": "话题变化"}
+{"kind": "split", "left": "被直白夸奖时会手足无措", "right": "嘴里还会立刻否认，说对方在胡说", "same_topic": true, "note": "同状态延续"}
+{"kind": "split", "left": "被直白夸奖时会手足无措", "right": "长期被冷落时会变得异常安静", "same_topic": false, "note": "状态切换"}
+{"kind": "split", "left": "买点心的时候顺手多买了一份", "right": "路过宠物店看到新的小摆件", "same_topic": false, "note": "两件不同的事"}
+{"kind": "split", "left": "她嘴上说只是顺路", "right": "其实绕了很远的路才送到", "same_topic": true, "note": "同一行为的两面"}
+# 检索样本：kind=retrieval，positive 表示应命中资料
+# 未指定 expected 的正样本按“全部候选中最高分”度量，属较弱证据；
+# 提供者确认的正式样本应补上 expected 片段 id，使门槛绑定到具体资料片段。
+{"kind": "retrieval", "stage": "reply", "query": "今天社团有什么新鲜事", "positive": true, "note": "同义触发，应命中"}
+{"kind": "retrieval", "stage": "reply", "query": "我有点累", "positive": true, "note": "应有可参考语境"}
+{"kind": "retrieval", "stage": "reply", "query": "帮我写一段快速排序代码", "positive": false, "note": "无关内容应低于门槛"}
+{"kind": "retrieval", "stage": "reply", "query": "明天上海股市会涨吗", "positive": false, "note": "超出人物设定范围"}
