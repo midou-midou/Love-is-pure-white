@@ -1256,6 +1256,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "python-docx" },
     { name = "uvicorn" },
+    { name = "websockets" },
 ]
 
 [package.optional-dependencies]
@@ -1284,6 +1285,7 @@ requires-dist = [
     { name = "python-docx", specifier = ">=1.2,<2" },
     { name = "sentence-transformers", marker = "extra == 'local-embeddings'", specifier = ">=5.2,<6" },
     { name = "uvicorn", specifier = ">=0.30,<1" },
+    { name = "websockets", specifier = ">=13,<17" },
 ]
 provides-extras = ["local-embeddings"]
 

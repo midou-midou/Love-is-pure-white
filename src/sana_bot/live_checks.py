@@ -16,7 +16,14 @@ from sana_bot.dialogue.deepseek import ChatDeepSeekModel
 from sana_bot.errors import ConfigError, ExternalServiceError
 from sana_bot.ports import ModelBudget, ModelRequest
 
-__all__ = ["LiveCheck", "model_smoke", "qq_auth_smoke", "SMOKE_PROMPT", "SMOKE_JSON_PROMPT"]
+__all__ = [
+    "LiveCheck",
+    "model_smoke",
+    "qq_auth_smoke",
+    "qq_gateway_smoke",
+    "SMOKE_PROMPT",
+    "SMOKE_JSON_PROMPT",
+]
 
 SMOKE_PROMPT = "用一句不超过十五字的短句，以乾纱凪的口吻回应「今天社团有点忙」"
 SMOKE_JSON_PROMPT = (
@@ -48,6 +55,16 @@ class LiveCheck:
         return payload
 
 
+def _host_of(url: str) -> str:
+    """诊断只保留 host，避免把完整地址写进报告。"""
+    try:
+        from urllib.parse import urlparse
+
+        return urlparse(url).netloc or url
+    except Exception:  # noqa: BLE001
+        return "unknown"
+
+
 def _client(environment: Environment) -> ChatDeepSeekModel:
     return ChatDeepSeekModel(
         api_key=environment.deepseek_api_key,
@@ -55,6 +72,69 @@ def _client(environment: Environment) -> ChatDeepSeekModel:
         base_url=environment.deepseek_base_url,
         total_budget_seconds=SMOKE_BUDGET_SECONDS,
     )
+
+
+async def qq_gateway_smoke(
+    environment: Environment,
+    *,
+    client: Any | None = None,
+    http_client: Any | None = None,
+) -> LiveCheck:
+    """真实网关检查：取 access_token 后调用 ``GET /gateway``。
+
+    只验证「能拿到 WSS 接入点」，不建立长连接（长连接由服务进程负责），
+    因此不会消耗事件配额，也不会因 intents 权限问题误报。
+    """
+    from sana_bot.adapters.qq_auth import QQAuthClient, QQCredentials
+    from sana_bot.adapters.qq_gateway import fetch_gateway_url
+
+    missing = [
+        name
+        for name, present in (
+            ("QQ_APP_ID", environment.qq_app_id),
+            ("QQ_APP_SECRET", environment.qq_app_secret),
+        )
+        if not present
+    ]
+    if missing:
+        return LiveCheck(
+            name="qq_gateway_smoke",
+            executed=False,
+            reason_code="qq_credentials_missing",
+            details={"missing": missing, "note": "缺少凭据，检查未执行"},
+        )
+    auth = QQAuthClient(
+        credentials=QQCredentials(
+            app_id=environment.qq_app_id,
+            app_secret=environment.qq_app_secret,
+            base_url=environment.qq_api_base_url,
+        ),
+        client=client,
+    )
+    details: dict[str, Any] = {
+        "transport": environment.qq_transport,
+        "intents": environment.qq_intents,
+        "shard": list(environment.qq_shard),
+    }
+    started = time.perf_counter()
+    try:
+        token = await auth.access_token()
+        url = await fetch_gateway_url(
+            base_url=environment.qq_api_base_url,
+            access_token=token,
+            client=http_client,
+        )
+    except (ExternalServiceError, ConfigError) as exc:
+        return LiveCheck(
+            name="qq_gateway_smoke",
+            executed=True,
+            ok=False,
+            reason_code=exc.reason_code,
+            details={**details, "message": exc.message[:160], **(exc.details or {})},
+        )
+    details["latency_ms"] = round((time.perf_counter() - started) * 1000, 1)
+    details["url_host"] = _host_of(url)
+    return LiveCheck(name="qq_gateway_smoke", executed=True, ok=True, details=details)
 
 
 async def model_smoke(environment: Environment, *, client: Any | None = None) -> LiveCheck:

@@ -6,9 +6,10 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
-from dataclasses import dataclass
+from contextlib import asynccontextmanager, suppress
+from dataclasses import dataclass, field
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
@@ -28,6 +29,9 @@ class ApplicationServices:
     webhook: QQWebhookHandler
     worker: Any
     maintenance: Any | None = None
+    #: WebSocket 长连接客户端；仅当 ``QQ_TRANSPORT=websocket`` 时注入
+    gateway: Any | None = None
+    _gateway_task: Any = field(default=None, init=False, repr=False)
 
     async def startup(self) -> dict[str, Any]:
         if self.maintenance is not None:
@@ -40,6 +44,9 @@ class ApplicationServices:
         cancelled = self.maintenance.cancel_monologues() if self.maintenance else 0
         await self.worker.start()
         requeued = await self.worker.recover()
+        if self.gateway is not None:
+            # 先起 worker 再接事件：连上就可能立刻下发消息
+            self._gateway_task = asyncio.create_task(self.gateway.run_forever())
         return {
             "recovered_deliveries": recovered_deliveries,
             "requeued_inbound": len(requeued),
@@ -48,6 +55,11 @@ class ApplicationServices:
         }
 
     async def shutdown(self) -> None:
+        if self._gateway_task is not None:
+            self._gateway_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self._gateway_task
+            self._gateway_task = None
         await self.worker.stop()
         if self.maintenance is not None:
             self.maintenance.stop()
@@ -111,6 +123,13 @@ def build_application(services: ApplicationServices, *, title: str = "sana-bot")
 
     @app.post("/qq/webhook")
     async def webhook(request: Request) -> Response:
+        if services.context.environment.qq_transport != "webhook":
+            # 长连接模式下回调入口不参与收发，避免同一条消息被受理两次
+            return Response(
+                content='{"status": "error", "reason_code": "webhook_disabled"}',
+                status_code=409,
+                media_type="application/json",
+            )
         raw_body = await request.body()
         signature = request.headers.get("X-Signature-Ed25519")
         timestamp = request.headers.get("X-Signature-Timestamp")

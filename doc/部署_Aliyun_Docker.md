@@ -47,7 +47,7 @@ docker compose run --rm app doctor --offline       # 容器内只读体检
 | --- | --- |
 | **只能单实例**（不要 `docker compose up --scale app=2`） | 入站去重靠 SQLite 唯一键、每用户串行队列在进程内存里，多副本会重复回复或乱序 |
 | **`runtime/` 必须持久化** | SQLite（WAL）、索引快照（`vectors.npy` 等）、校准/评估报告都在里面；容器重建不能丢 |
-| **必须 HTTPS 公网回调** | QQ 官方要求回调地址为 HTTPS，且校验签名依赖**原始请求体**（反向代理不能改写 body） |
+| **入站方式二选一** | `QQ_TRANSPORT=webhook` 需要 HTTPS 公网回调（官方强制 HTTPS，且签名依赖原始请求体）；`QQ_TRANSPORT=websocket` 由进程**出网**连长连接，**不需要域名、证书、备案，也不开放任何入站端口** |
 | **镜像默认不含本地向量模型** | 默认构建只装远程向量后端依赖（`EMBEDDING_KIND=openai_compatible`），镜像小很多 |
 
 ## 2 前置条件
@@ -61,12 +61,12 @@ docker compose run --rm app doctor --offline       # 容器内只读体检
    docker compose version
    ```
 
-3. **安全组**：入方向只放行 `22/tcp`（限制来源 IP）、`80/tcp`、`443/tcp`（及 `443/udp`，HTTP/3 可选）。
-   **不要**对公网开放 `8000`。
-4. **域名**：一个解析到该 ECS 公网 IP 的域名。中国大陆地域使用 80/443 对外提供服务，
-   按现行要求需完成 ICP 备案；未备案可先选香港/新加坡等地域，或用非 80/443 端口
-   （QQ 回调仍需 HTTPS）。
-5. **QQ 开放平台**：应用已获 C2C 文本能力，能配置回调地址与沙箱用户。
+3. **安全组**：webhook 模式需入方向放行 `80/tcp`、`443/tcp`；**websocket 模式只需 `22/tcp`**。
+   任何模式下**都不要**对公网开放 `8000`。
+4. **域名**（仅 webhook 模式）：解析到该 ECS 公网 IP 的域名，大陆地域还需 ICP 备案。
+   websocket 模式完全不需要域名。
+5. **QQ 开放平台**：应用已获 C2C 文本能力与 `GROUP_AND_C2C_EVENT` 事件订阅权限；
+   webhook 模式需配置回调地址，websocket 模式无需配置。
 
 > `docker pull` 若报 `registry-1.docker.io ... i/o timeout`，先按 §5.1 配好镜像加速再往下走，
 > 否则构建与 `--profile tls` 的 Caddy 拉取都会失败。
@@ -246,6 +246,38 @@ Caddy 会自动为 `SANABOT_DOMAIN` 申请并续期证书，HTTPS 反代到 `app
 不想用 Caddy（已有 SLB/Nginx）时只跑 `docker compose up -d`：
 应用只监听 `127.0.0.1:8000`，由前置代理转发到该端口，**同样必须保留原始 body**。
 
+### 5.4 长连接模式（无域名 / 无证书 / 无备案）
+
+进程主动出网连 `wss://api.bot.qq.com/websocket/`，事件走与 webhook 完全相同的受理链路
+（去重落盘 + 每用户串行队列），回复仍走 OpenAPI。适合只有公网 IP、没有域名的情况。
+
+```bash
+# .env
+QQ_TRANSPORT=websocket
+# 以下可选，括号内为默认值
+# QQ_INTENTS=33554432        # GROUP_AND_C2C_EVENT（C2C_MESSAGE_CREATE 等）
+# QQ_SHARD=0,1              # 单实例不需要分片
+# QQ_GATEWAY_URL=           # 留空则调用 GET /gateway 取接入点
+```
+
+```bash
+docker compose up -d --build
+docker compose logs -f app          # 看到 gateway_identify / gateway_ready 即登录成功
+curl -fsS http://127.0.0.1:8000/readyz
+docker compose run --rm app doctor --qq   # 会额外验证能否拿到 WSS 接入点
+```
+
+要点：
+
+- 该模式下 `/qq/webhook` 返回 **409 `webhook_disabled`**，避免同一条消息被受理两次；
+  平台管理端就算配了回调地址也不会收到事件。
+- 断线自动重连：先 `op=6 Resume` 续传（补发遗漏事件），session 失效（`op=9`）才重新
+  `op=2 Identify` 并刷新 access_token；重连退避 1→60 秒并带抖动。
+- 长连接事件不经过 HTTP，**没有回调验签环节**，来源由会话鉴权保证；入站去重仍然生效，
+  因此 Resume 补发的重复事件不会二次回复。
+- 如果 `intents` 没有权限，网关会直接关闭连接：日志里会反复出现 `gateway_disconnected`，
+  用 `doctor --qq` 核对权限与凭据。
+
 ## 6 验证
 
 ```bash
@@ -263,6 +295,13 @@ curl -fsS http://127.0.0.1:8000/readyz    # ready=true 才代表有已启用索�
 
 `/healthz` 只表示进程活着（容器健康检查用它，避免索引未就绪时被反复重启）；
 `/readyz` 返回 503 时看 `problems` 字段（`no_active_index`、`reply_calibration_missing` 等）。
+
+长连接模式（`QQ_TRANSPORT=websocket`）额外确认：
+
+```bash
+docker compose logs app | grep -E "gateway_(identify|ready|resumed|disconnected)"
+docker compose run --rm app doctor --qq | python3 -m json.tool | grep -A6 '"gateway"'
+```
 
 带域名时：
 
@@ -339,6 +378,10 @@ docker compose up -d
 | `/readyz` 503 `no_active_index` | `runtime/` 没挂对，或索引未启用 |
 | `/readyz` 503 `reply_calibration_missing` | 索引未完成校准/审批链 |
 | 回调 401/403 | 签名校验失败：反向代理改了 body、或 `QQ_APP_SECRET` 不一致 |
+| 回调 409 `webhook_disabled` | 当前是 `QQ_TRANSPORT=websocket`，回调入口已停用（预期行为） |
+| 日志反复 `gateway_disconnected` 且 `message` 含 401/403 | access_token 或 `QQ_INTENTS` 权限不足：用 `doctor --qq` 看 `gateway` 段落 |
+| 长连接建上但收不到单聊消息 | `QQ_INTENTS` 没包含 `1 << 25`（`GROUP_AND_C2C_EVENT`），或应用未获单聊能力 |
+| 同一条消息被回复两次 | 同时跑了 webhook 与 websocket 两种接入，或起了多个实例 |
 | 回复显示「未送达」但页面有内容 | 测试 openid 不是沙箱用户，平台拒绝发送；属预期 |
 | 日志 `database is locked` | 同时跑了多个实例或外部脚本直连写库；保持单实例 |
 | 日志刷屏 `mkdir: cannot create directory '/app/runtime/logs': Permission denied`（容器反复 Restarting） | 挂载目录属主不是 `10001`。八成是 `SANABOT_RUNTIME_DIR` 没指向已 chown 的数据目录，compose 用了默认 `./runtime`。按 §3 设置路径并 `chown -R 10001:10001`。新版入口脚本会打印一行可照抄的 `chown` 命令后以 78 退出 |

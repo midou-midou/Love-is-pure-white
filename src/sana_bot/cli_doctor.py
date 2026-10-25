@@ -246,8 +246,13 @@ def build_services(
         app_id=context.environment.qq_app_id,
     )
     maintenance = RuntimeMaintenance(context=context, state_service=state_service)
+    gateway = _build_gateway(context, auth=auth, webhook=webhook)
     services = ApplicationServices(
-        context=context, webhook=webhook, worker=worker, maintenance=maintenance
+        context=context,
+        webhook=webhook,
+        worker=worker,
+        maintenance=maintenance,
+        gateway=gateway,
     )
     del allow_live_model
     return RunServices(
@@ -258,6 +263,34 @@ def build_services(
         worker=worker,
         services=services,
         embeddings=embeddings,
+    )
+
+
+def _build_gateway(
+    context: RuntimeContext,
+    *,
+    auth: Any,
+    webhook: Any,
+) -> Any:
+    """按 ``QQ_TRANSPORT`` 决定是否启用 WebSocket 长连接。
+
+    长连接与 webhook 共用同一条受理链路：``webhook.accept_dispatch`` 已包含
+    去重落盘与串行入队，因此这里只负责协议与心跳。
+    """
+    environment = context.environment
+    if environment.qq_transport != "websocket":
+        return None
+    from sana_bot.adapters.qq_gateway import GatewayOptions, QQGatewayClient
+
+    return QQGatewayClient(
+        auth=auth,
+        accept=webhook.accept_dispatch,
+        options=GatewayOptions(
+            intents=environment.qq_intents,
+            shard=environment.qq_shard,
+            gateway_url=environment.qq_gateway_url,
+        ),
+        diagnostics=context.diagnostics,
     )
 
 
@@ -308,6 +341,13 @@ def run_doctor(args: argparse.Namespace) -> dict[str, Any]:
             problems.extend(package_state.get("problems") or [])
         elif reply is None:
             problems.append("reply_calibration_missing")
+
+        checks["transport"] = {
+            "mode": context.environment.qq_transport,
+            "intents": context.environment.qq_intents,
+            "shard": list(context.environment.qq_shard),
+            "gateway_url_override": bool(context.environment.qq_gateway_url),
+        }
 
         credentials = context.environment.credential_status()
         checks["credentials"] = credentials
@@ -430,11 +470,20 @@ def _live_model_check(context: RuntimeContext) -> dict[str, Any]:
 
 
 def _qq_check(context: RuntimeContext) -> dict[str, Any]:
-    """真实 QQ 凭据检查：按官方接口获取 access_token；沙箱回调另行执行。"""
-    from sana_bot.live_checks import qq_auth_smoke
+    """真实 QQ 检查：取 access_token，并验证能否拿到 WSS 接入点。"""
+    from sana_bot.live_checks import qq_auth_smoke, qq_gateway_smoke
 
-    check = asyncio.run(qq_auth_smoke(context.environment))
-    return check.to_payload()
+    auth = asyncio.run(qq_auth_smoke(context.environment))
+    payload = auth.to_payload()
+    gateway = asyncio.run(qq_gateway_smoke(context.environment))
+    details = dict(payload.get("details") or {})
+    details["gateway"] = gateway.to_payload()
+    details["transport"] = context.environment.qq_transport
+    payload["details"] = details
+    if payload.get("ok") and gateway.executed and not gateway.ok:
+        payload["ok"] = False
+        payload["reason_code"] = gateway.reason_code
+    return payload
 
 
 # --------------------------------------------------------------------------- serve

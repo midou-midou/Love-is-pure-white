@@ -23,6 +23,26 @@ langchain-deepseek、NumPy、python-docx、FastAPI、HTTPX、Pydantic 2、crypto
 可选组 `local-embeddings`：langchain-huggingface、sentence-transformers 5.x；
 dev 组：pytest、pytest-asyncio、respx）。本地向量后端是可选的，默认安装不拉 torch。
 
+## QQ 接入方式
+
+两种入站方式互斥，由 `QQ_TRANSPORT` 选择，**共用同一条受理链路**（去重落盘 + 每用户串行队列），
+回复都走 OpenAPI：
+
+| 方式 | 需要 | 事件来源 |
+| --- | --- | --- |
+| `webhook`（默认） | HTTPS 公网回调（域名 + 证书 + 备案）、Ed25519 验签 | 平台推送到 `/qq/webhook` |
+| `websocket` | 仅出网可达 `wss://api.bot.qq.com/websocket/` | 进程主动连网关，`op=2 Identify` 后接收 `op=0` 事件 |
+
+`websocket` 模式细节：
+
+- 订阅位 `QQ_INTENTS` 默认 `33554432`（`GROUP_AND_C2C_EVENT`，含 `C2C_MESSAGE_CREATE`）；
+  分片用 `QQ_SHARD`（默认 `0,1`），网关地址可用 `QQ_GATEWAY_URL` 覆盖。
+- 断线续传：先 `op=6 Resume`（token/session_id/seq）补发遗漏事件，`op=9` 才重新 Identify
+  并刷新 access_token；重连退避 1→60 秒带抖动。
+- 该模式下 `/qq/webhook` 返回 409 `webhook_disabled`，防止同一条消息被受理两次。
+- 运行期事件写入诊断类别 `transport`（`gateway_identify`/`gateway_ready`/`gateway_disconnected` 等），
+  `doctor --qq` 会额外验证能否取到 WSS 接入点。
+
 ## 向量后端配置
 
 向量编码有本地与远程两种后端，由 `EMBEDDING_KIND` 选择；两者共用同一适配层，

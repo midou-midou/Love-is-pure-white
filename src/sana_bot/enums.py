@@ -121,6 +121,7 @@ class DiagnosticCategory(StrEnum):
     OUTPUT_BLOCKED = "output_blocked"
     DELIVERY_ERROR = "delivery_error"
     LOGGING_ERROR = "logging_error"
+    TRANSPORT = "transport"
 
 
 class IndexStatus(StrEnum):

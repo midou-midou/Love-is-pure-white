@@ -35,7 +35,8 @@ from sana_bot.storage.index_repository import StructureRepository
 from tests.support import FakeModel, FakeQQTransport, make_event
 from tests.support.index_fixture import build_indexed_fixture
 
-BASE_TIME = datetime(2026, 10, 25, 12, 0, tzinfo=UTC)
+# 被动回复窗口只有几分钟：基准时间必须贴近"现在"，否则用例会随时间自然过期
+BASE_TIME = datetime.now(UTC).replace(microsecond=0)
 REPORTED_DRAFT = "我弟弟叫乾理央，老跟我拌嘴的那个\n你问这么多是想干嘛"
 NONSENSE_VIOLATION = "缺少待审核的角色输出"
 

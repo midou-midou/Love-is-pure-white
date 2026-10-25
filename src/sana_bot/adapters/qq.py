@@ -177,7 +177,9 @@ class QQWebhookHandler:
                 payload={"status": "error", "reason_code": "bad_signature"},
                 reason_code="bad_signature",
             )
-        return await self._accept(payload, received_at=received_at or datetime.now(UTC))
+        return await self.accept_dispatch(
+            payload, received_at=received_at or datetime.now(UTC), signed=True
+        )
 
     def _verify(
         self,
@@ -223,9 +225,20 @@ class QQWebhookHandler:
             reason_code="challenge_signed",
         )
 
-    async def _accept(
-        self, payload: dict[str, Any], *, received_at: datetime
+    async def accept_dispatch(
+        self,
+        payload: dict[str, Any],
+        *,
+        received_at: datetime | None = None,
+        signed: bool = False,
     ) -> WebhookDecision:
+        """受理一条 op=0 dispatch 事件。
+
+        ``signed=True`` 表示调用方已完成 webhook 验签；WebSocket 长连接由会话鉴权
+        保证来源，此时不重复验签，但仍走同一条「去重落盘 → 串行队列」链路。
+        """
+        del signed
+        received_at = received_at or datetime.now(UTC)
         event_type = payload.get("t")
         if event_type != C2C_EVENT_TYPE:
             return WebhookDecision(

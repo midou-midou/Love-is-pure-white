@@ -44,6 +44,39 @@ def _as_int_env(environ: Mapping[str, str], name: str, default: int) -> int:
     return parsed
 
 
+#: 单聊/群事件订阅位（GROUP_AND_C2C_EVENT）：C2C_MESSAGE_CREATE 等
+DEFAULT_QQ_INTENTS = 1 << 25
+QQ_TRANSPORTS = ("webhook", "websocket")
+
+
+def _qq_transport_env(environ: Mapping[str, str]) -> str:
+    raw = (environ.get("QQ_TRANSPORT") or "webhook").strip().lower()
+    if raw not in QQ_TRANSPORTS:
+        raise ConfigError(
+            f"QQ_TRANSPORT 只能是 {'/'.join(QQ_TRANSPORTS)}，得到 {raw!r}",
+            reason_code="qq_transport_invalid",
+        )
+    return raw
+
+
+def _qq_shard_env(environ: Mapping[str, str]) -> tuple[int, int]:
+    raw = (environ.get("QQ_SHARD") or "0,1").strip()
+    parts = [item.strip() for item in raw.split(",")]
+    try:
+        shard, total = (int(parts[0]), int(parts[1]))
+    except (IndexError, ValueError) as exc:
+        raise ConfigError(
+            f"QQ_SHARD 必须是「当前分片,分片总数」，得到 {raw!r}",
+            reason_code="qq_shard_invalid",
+        ) from exc
+    if total <= 0 or shard < 0 or shard >= total:
+        raise ConfigError(
+            f"QQ_SHARD 超出范围：分片 {shard} / 总数 {total}",
+            reason_code="qq_shard_invalid",
+        )
+    return shard, total
+
+
 def _host_of(url: str) -> str:
     if not url:
         return ""
@@ -97,6 +130,10 @@ class Environment:
     qq_app_id: str | None = None
     qq_app_secret: str | None = None
     qq_api_base_url: str = "https://api.bot.qq.com"
+    qq_transport: str = "webhook"
+    qq_intents: int = DEFAULT_QQ_INTENTS
+    qq_shard: tuple[int, int] = (0, 1)
+    qq_gateway_url: str | None = None
     embedding_model: str = "BAAI/bge-small-zh-v1.5"
     embedding_revision: str | None = None
     embedding_cache_dir: Path | None = None
@@ -124,6 +161,10 @@ class Environment:
             qq_app_id=value("QQ_APP_ID") or None,
             qq_app_secret=value("QQ_APP_SECRET") or None,
             qq_api_base_url=value("QQ_API_BASE_URL", "https://api.bot.qq.com"),
+            qq_transport=_qq_transport_env(environ),
+            qq_intents=_as_int_env(environ, "QQ_INTENTS", DEFAULT_QQ_INTENTS),
+            qq_shard=_qq_shard_env(environ),
+            qq_gateway_url=value("QQ_GATEWAY_URL") or None,
             embedding_model=value("EMBEDDING_MODEL", "BAAI/bge-small-zh-v1.5"),
             embedding_revision=revision,
             embedding_cache_dir=Path(cache).expanduser() if cache else None,
@@ -167,6 +208,10 @@ class Environment:
             "deepseek_model": self.deepseek_model,
             "deepseek_base_url": self.deepseek_base_url,
             "qq_api_base_url": self.qq_api_base_url,
+            "qq_transport": self.qq_transport,
+            "qq_intents": self.qq_intents,
+            "qq_shard": list(self.qq_shard),
+            "qq_gateway_url_host": _host_of(self.qq_gateway_url or ""),
             "embedding_kind": self.embedding_kind,
             "embedding_model": self.embedding_model,
             "embedding_revision": self.embedding_revision,
