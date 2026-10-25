@@ -1145,6 +1145,8 @@ class DialogueTurnService:
                 source_msg_id=item.inbound_id,
                 msg_seq=msg_seq,
                 user_key=_user_key(item),
+                # 平台只认 ROBOT1.0_... 形式的消息 id；inbound_id 是内部 uuid
+                platform_msg_id=item.message_id or None,
                 correlation_id=item.correlation_id,
             )
         except Exception as exc:  # noqa: BLE001 - 发送异常一律记 uncertain

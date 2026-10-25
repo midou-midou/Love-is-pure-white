@@ -131,6 +131,20 @@ async def test_three_turn_conversation_keeps_context(harness: _Harness) -> None:
     assert len(harness.settlements) == 3
 
 
+async def test_reply_passes_platform_message_id(harness: _Harness) -> None:
+    """被动回复的 msg_id 必须是平台 id，不是内部 inbound id（线上 400 的根因）。"""
+    harness.model.queue_text("（别开视线）……随便你")
+    item = harness.submit(message_id="ROBOT1.0_platform-shaped", text="你好", offset=10)
+    outcome = await harness.service.handle(item)
+    assert outcome.ok, outcome
+
+    sent = harness.transport.sent[0]
+    assert sent.platform_msg_id == item.message_id
+    assert sent.platform_msg_id == "ROBOT1.0_platform-shaped"
+    assert sent.source_msg_id == item.inbound_id
+    assert sent.platform_msg_id != sent.source_msg_id
+
+
 async def test_users_are_isolated(harness: _Harness) -> None:
     harness.model.queue_text("回复甲")
     first = harness.submit(message_id="m-1", text="我是用户甲的秘密", user_key="openid-a")

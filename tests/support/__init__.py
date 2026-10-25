@@ -193,6 +193,7 @@ class SentMessage:
     msg_seq: int
     user_key: str
     correlation_id: str | None
+    platform_msg_id: str | None = None
 
 
 class FakeQQTransport:
@@ -220,6 +221,7 @@ class FakeQQTransport:
         source_msg_id: str,
         msg_seq: int,
         user_key: str,
+        platform_msg_id: str | None = None,
         correlation_id: str | None = None,
     ) -> DeliveryResult:
         self.sent.append(
@@ -229,6 +231,7 @@ class FakeQQTransport:
                 msg_seq=msg_seq,
                 user_key=user_key,
                 correlation_id=correlation_id,
+                platform_msg_id=platform_msg_id,
             )
         )
         if self.exc is not None:

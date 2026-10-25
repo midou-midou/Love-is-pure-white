@@ -476,8 +476,15 @@ class QQTransport(Protocol):
         source_msg_id: str,
         msg_seq: int,
         user_key: str,
+        platform_msg_id: str | None = None,
         correlation_id: str | None = None,
-    ) -> DeliveryResult: ...
+    ) -> DeliveryResult:
+        """``source_msg_id`` 是内部入站 id（预算/去重）；``platform_msg_id`` 是平台消息 id。
+
+        被动回复必须用平台 id：官方 ``msg_id`` 只认 ``ROBOT1.0_...`` 这种平台标识，
+        传内部 uuid 会得到 400 Bad Request。
+        """
+        ...
 
 
 # --------------------------------------------------------------------------- 好感度与独白

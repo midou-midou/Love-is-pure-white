@@ -129,6 +129,8 @@ class MonologueDispatcher:
                 source_msg_id=opportunity.source_msg_id,
                 msg_seq=msg_seq,
                 user_key=user_key,
+                # 独白属于主动消息，没有可回复的平台消息 id
+                platform_msg_id=None,
                 correlation_id=correlation_id,
             )
         except Exception as exc:  # noqa: BLE001 - 结果不明不得重发

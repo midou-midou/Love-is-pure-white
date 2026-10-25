@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -22,6 +23,8 @@ from sana_bot.timeutil import utc_now
 __all__ = ["QQTextTransport", "SendGuardResult"]
 
 TOKEN_RETRY_LIMIT = 1
+
+logger = logging.getLogger("sana_bot.qq_sender")
 
 
 @dataclass(frozen=True)
@@ -81,14 +84,18 @@ class QQTextTransport:
         source_msg_id: str,
         msg_seq: int,
         user_key: str,
+        platform_msg_id: str | None = None,
         correlation_id: str | None = None,
     ) -> DeliveryResult:
-        payload = {
+        payload: dict[str, Any] = {
             "content": content,
             "msg_type": 0,
-            "msg_id": source_msg_id,
             "msg_seq": msg_seq,
         }
+        # 被动回复只认平台消息 id（ROBOT1.0_...）；内部 inbound id 会被判 400。
+        # 没有平台 id 视为主动消息，不传 msg_id。
+        if platform_msg_id:
+            payload["msg_id"] = platform_msg_id
         response: httpx.Response | None = None
         last_error: ExternalServiceError | None = None
         for attempt in range(TOKEN_RETRY_LIMIT + 1):
@@ -127,12 +134,26 @@ class QQTextTransport:
                 details={"http_status": response.status_code},
             )
         if response.status_code >= 400:
+            body = _json_body(response) or {}
+            details = {
+                "http_status": response.status_code,
+                "platform_code": body.get("code"),
+                "platform_message": str(body.get("message", ""))[:200],
+                "sent_msg_id_kind": _msg_id_kind(platform_msg_id),
+            }
+            logger.warning(
+                "qq_send_rejected http=%s code=%s message=%s msg_id_kind=%s",
+                response.status_code,
+                details["platform_code"],
+                details["platform_message"] or "-",
+                details["sent_msg_id_kind"],
+            )
             return DeliveryResult(
                 status=DeliveryStatus.REJECTED,
                 msg_seq=msg_seq,
                 reason_code=_http_reason(response),
                 correlation_id=correlation_id,
-                details={"http_status": response.status_code},
+                details=details,
             )
         body = _json_body(response)
         if body is None:
@@ -187,6 +208,15 @@ def _json_body(response: httpx.Response) -> dict[str, Any] | None:
     except ValueError:
         return None
     return body if isinstance(body, dict) else None
+
+
+def _msg_id_kind(platform_msg_id: str | None) -> str:
+    """只记录 id 的类别，便于定位 400 又不泄露内容。"""
+    if not platform_msg_id:
+        return "absent"
+    if platform_msg_id.startswith("ROBOT1.0_"):
+        return "platform"
+    return "unexpected"
 
 
 def _http_reason(response: httpx.Response) -> str:
