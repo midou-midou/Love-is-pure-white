@@ -89,6 +89,15 @@ sudo chown -R 10001:10001 /opt/sana-bot/runtime
 # 如果偏好用宿主的 uid/gid，见 docker-compose.yml 里 user: "${SANABOT_UID}:${SANABOT_GID}" 注释
 ```
 
+**目录路径必须交代清楚**：compose 默认挂载项目目录下的 `./runtime`，而上面的迁移目标是
+`/opt/sana-bot/runtime`。代码不在 `/opt/sana-bot` 时，二选一：
+
+- 在 `.env` 里显式指定数据目录：`SANABOT_RUNTIME_DIR=/opt/sana-bot/runtime`（推荐，数据只放一处）
+- 或把数据搬进项目目录：`mv /opt/sana-bot/runtime/* /path/to/project/runtime/ && sudo chown -R 10001:10001 /path/to/project/runtime`
+
+否则 Docker 会按默认值在项目目录下新建一个 **root 属主的空 `runtime/`**，
+容器内 uid `10001` 无法写入，启动即失败（症状见 §9）。
+
 > 不想带 `runtime/`？那就必须在服务器上重建索引：见 [§7 在容器内管理索引](#7-在容器内管理索引)。
 > 重建需要解析资料 + 校准 + 评估 + 审批 + 启用，成本高，首次部署建议直接迁移已验证的 `runtime/`。
 
@@ -331,7 +340,7 @@ docker compose up -d
 | 回调 401/403 | 签名校验失败：反向代理改了 body、或 `QQ_APP_SECRET` 不一致 |
 | 回复显示「未送达」但页面有内容 | 测试 openid 不是沙箱用户，平台拒绝发送；属预期 |
 | 日志 `database is locked` | 同时跑了多个实例或外部脚本直连写库；保持单实例 |
-| 启动即 `PermissionError: /app/runtime/logs` | 宿主 `runtime/` 属主不是 10001，见 §3 的 `chown` 或启用 compose 的 `user:` |
+| 日志刷屏 `mkdir: cannot create directory '/app/runtime/logs': Permission denied`（容器反复 Restarting） | 挂载目录属主不是 `10001`。八成是 `SANABOT_RUNTIME_DIR` 没指向已 chown 的数据目录，compose 用了默认 `./runtime`。按 §3 设置路径并 `chown -R 10001:10001`。新版入口脚本会打印一行可照抄的 `chown` 命令后以 78 退出 |
 | `local_embeddings_extra_missing` | `.env` 用了 `EMBEDDING_KIND=local` 但镜像未装可选组：改用 `--build-arg INSTALL_LOCAL_EMBEDDINGS=1` 重建，或切回远程向量 |
 | `docker compose up` 报找不到 `.env` | compose 的 `env_file` 要求 `.env` 存在，先 `cp .env.example .env` |
 | `Get "https://registry-1.docker.io/v2/": ... i/o timeout` | Docker Hub 不可达：按 §5.1.1 配镜像加速，或用 `SANABOT_BASE_IMAGE` / `SANABOT_CADDY_IMAGE` 指到加速地址 |
