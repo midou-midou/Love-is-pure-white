@@ -496,8 +496,15 @@ def run_serve(args: argparse.Namespace) -> dict[str, Any]:
         raise ConfigError("缺少 QQ_APP_SECRET，不能启动服务", reason_code="qq_credentials_missing")
     run = build_services(context)
     application = build_application(run.services)
+    import logging
+
     import uvicorn
 
+    # uvicorn 只配置自己的 logger；应用侧日志（长连接生命周期等）需要根 handler
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    )
     uvicorn.run(application, host=args.host, port=int(args.port), log_level="info")
     return {"status": "stopped", "host": args.host, "port": int(args.port)}
 
