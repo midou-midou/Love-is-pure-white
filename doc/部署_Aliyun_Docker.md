@@ -354,6 +354,13 @@ docker compose up -d          # 只重建有变化的容器，索引与数据不
 docker compose run --rm app doctor --offline
 ```
 
+> **升级 docker 引擎后必须重启 daemon**。`apt upgrade` 只换二进制，正在跑的 `dockerd`
+> 仍是旧版本，新版 CLI 会直接拒绝通信（见 §9 第一条）。升级后执行：
+>
+> ```bash
+> sudo systemctl restart docker && docker version | grep -A2 -E "^Client|^Server"
+> ```
+
 ### 回滚
 
 ```bash
@@ -379,6 +386,8 @@ docker compose up -d
 | `/readyz` 503 `reply_calibration_missing` | 索引未完成校准/审批链 |
 | 回调 401/403 | 签名校验失败：反向代理改了 body、或 `QQ_APP_SECRET` 不一致 |
 | 回调 409 `webhook_disabled` | 当前是 `QQ_TRANSPORT=websocket`，回调入口已停用（预期行为） |
+| `docker ps` 报 `client version 1.52 is too new. Maximum supported API version is 1.43` | **不是 CLI 太新，是 daemon 太旧**：`apt upgrade` 换了二进制但 `dockerd` 进程还是升级前的版本，而新版 CLI 已不支持旧 API。`sudo systemctl restart docker` 让进程与二进制同版本即可，**不要降级 CLI**。验证：`docker version` 里 Client 与 Server 的 `API version` 必须一致 |
+| `docker compose` 报 `unknown command: docker compose` | 只装了独立的 `docker-compose`，没有 compose 插件。`sudo ln -sf /usr/local/bin/docker-compose /usr/libexec/docker/cli-plugins/docker-compose` |
 | 日志反复 `gateway_disconnected` 且 `message` 含 401/403 | access_token 或 `QQ_INTENTS` 权限不足：用 `doctor --qq` 看 `gateway` 段落 |
 | 长连接建上但收不到单聊消息 | `QQ_INTENTS` 没包含 `1 << 25`（`GROUP_AND_C2C_EVENT`），或应用未获单聊能力 |
 | 同一条消息被回复两次 | 同时跑了 webhook 与 websocket 两种接入，或起了多个实例 |
