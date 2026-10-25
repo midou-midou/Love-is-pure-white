@@ -335,6 +335,7 @@ docker compose up -d
 | 启动即退出，日志 `qq_credentials_missing` | `QQ_APP_SECRET` 未注入 |
 | `embedding_credentials_missing` / `embedding_revision_missing` | 远程向量缺 key/URL，或误用 `local` 却没给精确 revision |
 | `embedding_dimension_mismatch` | `.env` 的维度与已建索引编码器不一致（换模型必须重建索引） |
+| `embedding_probe_failed:embedding_bad_request` | 远程向量返回 400：`.env` 的 `EMBEDDING_MODEL` 与服务商实际提供的模型不符，或与索引里的 `embedding_model_id` 不一致。`cp .env.example .env` 会留下模板默认的 `bge-small-zh-v1.5`，而本项目的索引是 `BAAI/bge-large-zh-v1.5`/1024 维。对照索引改回 `EMBEDDING_MODEL` / `EMBEDDING_DIMENSION` / `EMBEDDING_MAX_TOKENS` 后再 `docker compose up -d` |
 | `/readyz` 503 `no_active_index` | `runtime/` 没挂对，或索引未启用 |
 | `/readyz` 503 `reply_calibration_missing` | 索引未完成校准/审批链 |
 | 回调 401/403 | 签名校验失败：反向代理改了 body、或 `QQ_APP_SECRET` 不一致 |
